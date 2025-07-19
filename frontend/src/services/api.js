@@ -92,6 +92,8 @@ export const postsAPI = {
   reopenPost: (id) => api.post(`/posts/${id}/reopen/`),
   getCategories: () => api.get('/posts/categories/'),
   getStatuses: () => api.get('/posts/statuses/'),
+  getSearchSuggestions: (query) => api.get('/posts/search_suggestions/', { params: { q: query } }),
+  getStatistics: () => api.get('/posts/statistics/'),
 };
 
 // Comments API

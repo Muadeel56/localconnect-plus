@@ -18,6 +18,13 @@ const PostDetail = () => {
   const [showReplyForm, setShowReplyForm] = useState(null);
 
   useEffect(() => {
+    // Check if ID is valid (numeric)
+    if (!id || isNaN(parseInt(id))) {
+      setError('Invalid post ID');
+      setLoading(false);
+      return;
+    }
+    
     fetchPost();
     fetchComments();
   }, [id]);
