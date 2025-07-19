@@ -7,9 +7,11 @@ const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
+    first_name: '',
+    last_name: '',
     password: '',
-    confirmPassword: '',
-    role: 'user'
+    password2: '',
+    role: 'USER'
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -47,17 +49,25 @@ const Register = () => {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
+
+    if (!formData.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
+    }
+
+    if (!formData.last_name.trim()) {
+      newErrors.last_name = 'Last name is required';
+    }
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
     }
     
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+    if (!formData.password2) {
+      newErrors.password2 = 'Please confirm your password';
+    } else if (formData.password !== formData.password2) {
+      newErrors.password2 = 'Passwords do not match';
     }
     
     setErrors(newErrors);
@@ -77,7 +87,10 @@ const Register = () => {
       const result = await register({
         username: formData.username,
         email: formData.email,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         password: formData.password,
+        password2: formData.password2,
         role: formData.role
       });
       
@@ -198,6 +211,73 @@ const Register = () => {
                   )}
                 </div>
 
+                {/* Name Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* First Name Field */}
+                  <div className="form-group">
+                    <label htmlFor="first_name" className="form-label">
+                      First Name
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="first_name"
+                        name="first_name"
+                        value={formData.first_name}
+                        onChange={handleChange}
+                        className={`form-input ${errors.first_name ? 'border-error-500 focus:border-error-500 focus:ring-error-500' : ''}`}
+                        placeholder="Enter your first name"
+                        disabled={isLoading}
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <svg className="w-5 h-5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                    {errors.first_name && (
+                      <p className="mt-1 text-sm text-error-500 flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.first_name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Last Name Field */}
+                  <div className="form-group">
+                    <label htmlFor="last_name" className="form-label">
+                      Last Name
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="last_name"
+                        name="last_name"
+                        value={formData.last_name}
+                        onChange={handleChange}
+                        className={`form-input ${errors.last_name ? 'border-error-500 focus:border-error-500 focus:ring-error-500' : ''}`}
+                        placeholder="Enter your last name"
+                        disabled={isLoading}
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <svg className="w-5 h-5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                    {errors.last_name && (
+                      <p className="mt-1 text-sm text-error-500 flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.last_name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 {/* Password Field */}
                 <div className="form-group">
                   <label htmlFor="password" className="form-label">
@@ -220,6 +300,9 @@ const Register = () => {
                       </svg>
                     </div>
                   </div>
+                  <p className="mt-1 text-xs text-text-tertiary">
+                    Password must be at least 8 characters long and not too common
+                  </p>
                   {errors.password && (
                     <p className="mt-1 text-sm text-error-500 flex items-center">
                       <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -232,17 +315,17 @@ const Register = () => {
 
                 {/* Confirm Password Field */}
                 <div className="form-group">
-                  <label htmlFor="confirmPassword" className="form-label">
+                  <label htmlFor="password2" className="form-label">
                     Confirm Password
                   </label>
                   <div className="relative">
                     <input
                       type="password"
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
+                      id="password2"
+                      name="password2"
+                      value={formData.password2}
                       onChange={handleChange}
-                      className={`form-input ${errors.confirmPassword ? 'border-error-500 focus:border-error-500 focus:ring-error-500' : ''}`}
+                      className={`form-input ${errors.password2 ? 'border-error-500 focus:border-error-500 focus:ring-error-500' : ''}`}
                       placeholder="Confirm your password"
                       disabled={isLoading}
                     />
@@ -252,12 +335,12 @@ const Register = () => {
                       </svg>
                     </div>
                   </div>
-                  {errors.confirmPassword && (
+                  {errors.password2 && (
                     <p className="mt-1 text-sm text-error-500 flex items-center">
                       <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
-                      {errors.confirmPassword}
+                      {errors.password2}
                     </p>
                   )}
                 </div>
@@ -275,8 +358,8 @@ const Register = () => {
                     className="form-input"
                     disabled={isLoading}
                   >
-                    <option value="user">Regular User</option>
-                    <option value="volunteer">Volunteer</option>
+                    <option value="USER">Regular User</option>
+                    <option value="VOLUNTEER">Volunteer</option>
                   </select>
                 </div>
 

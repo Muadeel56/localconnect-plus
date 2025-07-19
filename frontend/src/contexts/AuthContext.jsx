@@ -64,6 +64,45 @@ export const AuthProvider = ({ children }) => {
       setUser(newUser);
       return { success: true };
     } catch (error) {
+      // Handle backend validation errors
+      if (error.response?.data) {
+        const backendErrors = error.response.data;
+        let errorMessage = 'Registration failed';
+        
+        // Check for specific field errors
+        if (backendErrors.password) {
+          errorMessage = Array.isArray(backendErrors.password) 
+            ? backendErrors.password[0] 
+            : backendErrors.password;
+        } else if (backendErrors.password2) {
+          errorMessage = Array.isArray(backendErrors.password2) 
+            ? backendErrors.password2[0] 
+            : backendErrors.password2;
+        } else if (backendErrors.first_name) {
+          errorMessage = Array.isArray(backendErrors.first_name) 
+            ? backendErrors.first_name[0] 
+            : backendErrors.first_name;
+        } else if (backendErrors.last_name) {
+          errorMessage = Array.isArray(backendErrors.last_name) 
+            ? backendErrors.last_name[0] 
+            : backendErrors.last_name;
+        } else if (backendErrors.email) {
+          errorMessage = Array.isArray(backendErrors.email) 
+            ? backendErrors.email[0] 
+            : backendErrors.email;
+        } else if (backendErrors.username) {
+          errorMessage = Array.isArray(backendErrors.username) 
+            ? backendErrors.username[0] 
+            : backendErrors.username;
+        } else if (backendErrors.non_field_errors) {
+          errorMessage = Array.isArray(backendErrors.non_field_errors) 
+            ? backendErrors.non_field_errors[0] 
+            : backendErrors.non_field_errors;
+        }
+        
+        return { success: false, error: errorMessage };
+      }
+      
       return { 
         success: false, 
         error: error.response?.data?.message || error.response?.data?.error || 'Registration failed' 
