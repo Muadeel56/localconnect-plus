@@ -2,7 +2,9 @@ from rest_framework import status, generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth import login, logout
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -12,6 +14,7 @@ from .serializers import (
     UserLoginSerializer, PasswordChangeSerializer, AdminUserSerializer
 )
 
+@method_decorator(csrf_exempt, name='dispatch')
 class UserRegistrationView(generics.CreateAPIView):
     """
     View for user registration
@@ -24,15 +27,20 @@ class UserRegistrationView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
             return Response({
                 'message': 'User registered successfully',
-                'user': UserProfileSerializer(user).data
+                'user': UserProfileSerializer(user).data,
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class UserLoginView(APIView):
     """
-    View for user login
+    View for user login with JWT tokens
     """
     permission_classes = [permissions.AllowAny]
     
@@ -40,22 +48,39 @@ class UserLoginView(APIView):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
-            login(request, user)
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
             return Response({
                 'message': 'Login successful',
-                'user': UserProfileSerializer(user).data
+                'user': UserProfileSerializer(user).data,
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class UserLogoutView(APIView):
     """
-    View for user logout
+    View for user logout (blacklist refresh token)
     """
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
-        logout(request)
-        return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
+        try:
+            refresh_token = request.data.get('refresh_token')
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TokenRefreshView(TokenRefreshView):
+    """
+    Custom token refresh view
+    """
+    pass
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     """
