@@ -180,23 +180,28 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="btn btn-primary w-full flex items-center justify-center space-x-2"
+                  className="w-full btn btn-primary py-3 text-lg font-semibold"
                 >
                   {isLoading ? (
-                    <>
-                      <div className="spinner w-4 h-4"></div>
-                      <span>Signing in...</span>
-                    </>
+                    <div className="flex items-center justify-center">
+                      <div className="spinner w-5 h-5 mr-2"></div>
+                      Logging in...
+                    </div>
                   ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                      </svg>
-                      <span>Sign In</span>
-                    </>
+                    'Login'
                   )}
                 </button>
               </form>
+
+              {/* Forgot Password Link */}
+              <div className="mt-4 text-center">
+                <Link 
+                  to="/request-password-reset" 
+                  className="text-sm text-accent hover:text-accent/80 font-medium"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
 
               {/* Register Link */}
               <div className="text-center mt-6">

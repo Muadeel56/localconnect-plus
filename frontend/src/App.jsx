@@ -7,6 +7,8 @@ import Loading from './components/Loading';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
+import RequestPasswordReset from './pages/RequestPasswordReset';
+import ResetPassword from './pages/ResetPassword';
 
 // Lazy load other pages
 const Posts = React.lazy(() => import('./pages/Posts'));
@@ -31,6 +33,8 @@ const App = () => {
                   <Route path="/" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  <Route path="/request-password-reset" element={<RequestPasswordReset />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/posts" element={<Posts />} />
                   <Route path="/posts/create" element={<CreatePost />} />
                   <Route path="/posts/:id" element={<PostDetail />} />

@@ -11,6 +11,14 @@ const Profile = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    old_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const [changingPassword, setChangingPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -42,6 +50,79 @@ const Profile = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (passwordErrors[name]) {
+      setPasswordErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validatePasswordForm = () => {
+    const newErrors = {};
+    
+    if (!passwordData.old_password) {
+      newErrors.old_password = 'Current password is required';
+    }
+    
+    if (!passwordData.new_password) {
+      newErrors.new_password = 'New password is required';
+    } else if (passwordData.new_password.length < 8) {
+      newErrors.new_password = 'Password must be at least 8 characters';
+    }
+    
+    if (!passwordData.confirm_password) {
+      newErrors.confirm_password = 'Please confirm your new password';
+    } else if (passwordData.new_password !== passwordData.confirm_password) {
+      newErrors.confirm_password = 'Passwords do not match';
+    }
+    
+    setPasswordErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validatePasswordForm()) {
+      return;
+    }
+    
+    setChangingPassword(true);
+    
+    try {
+      await authAPI.changePassword({
+        old_password: passwordData.old_password,
+        new_password: passwordData.new_password,
+        new_password2: passwordData.confirm_password
+      });
+      
+      setSuccess('Password changed successfully!');
+      setShowChangePassword(false);
+      setPasswordData({
+        old_password: '',
+        new_password: '',
+        confirm_password: ''
+      });
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+      
+    } catch (err) {
+      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to change password. Please try again.');
+      console.error('Error changing password:', err);
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -78,6 +159,17 @@ const Profile = () => {
       phone: user.phone || ''
     });
     setIsEditing(false);
+    setError(null);
+  };
+
+  const handleCancelPassword = () => {
+    setShowChangePassword(false);
+    setPasswordData({
+      old_password: '',
+      new_password: '',
+      confirm_password: ''
+    });
+    setPasswordErrors({});
     setError(null);
   };
 
@@ -139,12 +231,12 @@ const Profile = () => {
         {/* Error/Success Messages */}
         {error && (
           <div className="mb-8">
-            <Toast type="error" message={error} />
+            <Toast type="error" message={error} onClose={() => setError(null)} />
           </div>
         )}
         {success && (
           <div className="mb-8">
-            <Toast type="success" message={success} />
+            <Toast type="success" message={success} onClose={() => setSuccess(null)} />
           </div>
         )}
 
@@ -354,7 +446,10 @@ const Profile = () => {
                   Account Actions
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button className="btn btn-secondary w-full">
+                  <button 
+                    onClick={() => setShowChangePassword(true)}
+                    className="btn btn-secondary w-full"
+                  >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                     </svg>
@@ -369,6 +464,124 @@ const Profile = () => {
                 </div>
               </div>
             </div>
+
+            {/* Change Password Modal */}
+            {showChangePassword && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-bg-secondary rounded-lg shadow-xl max-w-md w-full p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold text-text-primary">
+                      Change Password
+                    </h3>
+                    <button
+                      onClick={handleCancelPassword}
+                      className="text-text-secondary hover:text-text-primary"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                    {/* Current Password */}
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-2">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        name="old_password"
+                        value={passwordData.old_password}
+                        onChange={handlePasswordChange}
+                        className={`w-full px-4 py-3 rounded-lg border transition-colors ${
+                          passwordErrors.old_password
+                            ? 'border-error bg-error/10 text-error'
+                            : 'border-border bg-bg-primary text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20'
+                        }`}
+                        placeholder="Enter current password"
+                        disabled={changingPassword}
+                      />
+                      {passwordErrors.old_password && (
+                        <p className="mt-1 text-sm text-error">{passwordErrors.old_password}</p>
+                      )}
+                    </div>
+
+                    {/* New Password */}
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-2">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        name="new_password"
+                        value={passwordData.new_password}
+                        onChange={handlePasswordChange}
+                        className={`w-full px-4 py-3 rounded-lg border transition-colors ${
+                          passwordErrors.new_password
+                            ? 'border-error bg-error/10 text-error'
+                            : 'border-border bg-bg-primary text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20'
+                        }`}
+                        placeholder="Enter new password"
+                        disabled={changingPassword}
+                      />
+                      {passwordErrors.new_password && (
+                        <p className="mt-1 text-sm text-error">{passwordErrors.new_password}</p>
+                      )}
+                    </div>
+
+                    {/* Confirm New Password */}
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-2">
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        name="confirm_password"
+                        value={passwordData.confirm_password}
+                        onChange={handlePasswordChange}
+                        className={`w-full px-4 py-3 rounded-lg border transition-colors ${
+                          passwordErrors.confirm_password
+                            ? 'border-error bg-error/10 text-error'
+                            : 'border-border bg-bg-primary text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20'
+                        }`}
+                        placeholder="Confirm new password"
+                        disabled={changingPassword}
+                      />
+                      {passwordErrors.confirm_password && (
+                        <p className="mt-1 text-sm text-error">{passwordErrors.confirm_password}</p>
+                      )}
+                    </div>
+
+                    {/* Form Actions */}
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="submit"
+                        disabled={changingPassword}
+                        className="btn btn-primary flex-1"
+                      >
+                        {changingPassword ? (
+                          <div className="flex items-center justify-center">
+                            <div className="spinner w-4 h-4 mr-2"></div>
+                            Changing...
+                          </div>
+                        ) : (
+                          'Change Password'
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelPassword}
+                        className="btn btn-secondary flex-1"
+                        disabled={changingPassword}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
