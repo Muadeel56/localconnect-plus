@@ -1,17 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { postsAPI } from '../services/api';
-import { handleApiError } from '../utils/apiUtils';
 import Toast from '../components/Toast';
+import CustomSelect from '../components/CustomSelect';
 
 const Posts = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
-  const [searchSuggestions, setSearchSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [categories, setCategories] = useState([]);
   const [statuses, setStatuses] = useState([]);
   const [filters, setFilters] = useState({
@@ -206,18 +204,13 @@ const Posts = () => {
               <label className="block text-sm font-medium text-text-secondary mb-2">
                 Category
               </label>
-              <select
+              <CustomSelect
+                options={[{ value: '', label: 'All Categories' }, ...categories]}
                 value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="select select-bordered w-full"
-              >
-                <option value="">All Categories</option>
-                {categories.map(category => (
-                  <option key={category.value} value={category.value}>
-                    {category.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => handleFilterChange('category', value)}
+                placeholder="Select Category"
+                className="w-full"
+              />
             </div>
 
             {/* Status */}
@@ -225,18 +218,13 @@ const Posts = () => {
               <label className="block text-sm font-medium text-text-secondary mb-2">
                 Status
               </label>
-              <select
+              <CustomSelect
+                options={[{ value: '', label: 'All Statuses' }, ...statuses]}
                 value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="select select-bordered w-full"
-              >
-                <option value="">All Statuses</option>
-                {statuses.map(status => (
-                  <option key={status.value} value={status.value}>
-                    {status.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => handleFilterChange('status', value)}
+                placeholder="Select Status"
+                className="w-full"
+              />
             </div>
 
             {/* Time Period */}
@@ -244,17 +232,19 @@ const Posts = () => {
               <label className="block text-sm font-medium text-text-secondary mb-2">
                 Time Period
               </label>
-              <select
+              <CustomSelect
+                options={[
+                  { value: '', label: 'All Time' },
+                  { value: 'today', label: 'Today' },
+                  { value: 'week', label: 'This Week' },
+                  { value: 'month', label: 'This Month' },
+                  { value: 'year', label: 'This Year' }
+                ]}
                 value={filters.time_period}
-                onChange={(e) => handleFilterChange('time_period', e.target.value)}
-                className="select select-bordered w-full"
-              >
-                <option value="">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="year">This Year</option>
-              </select>
+                onChange={(value) => handleFilterChange('time_period', value)}
+                placeholder="Select Time Period"
+                className="w-full"
+              />
             </div>
           </div>
 

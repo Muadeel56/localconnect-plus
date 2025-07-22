@@ -53,8 +53,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
+    console.log('AuthContext register called with:', userData);
+    alert('Register function called!');
     try {
+      console.log('Making API call to /accounts/register/');
       const response = await api.post('/accounts/register/', userData);
+      console.log('API response:', response.data);
       const { access, refresh, user: newUser } = response.data;
       
       localStorage.setItem('access_token', access);
@@ -64,6 +68,9 @@ export const AuthProvider = ({ children }) => {
       setUser(newUser);
       return { success: true };
     } catch (error) {
+      console.error('Registration API error:', error);
+      console.error('Error response:', error.response?.data);
+      
       // Handle backend validation errors
       if (error.response?.data) {
         const backendErrors = error.response.data;
@@ -202,6 +209,8 @@ export const AuthProvider = ({ children }) => {
     toggleTheme,
     isAuthenticated: !!user
   };
+  
+  console.log('AuthContext value:', value);
 
   return (
     <AuthContext.Provider value={value}>

@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+console.log('API_BASE_URL:', API_BASE_URL);
+console.log('VITE_API_BASE_URL env var:', import.meta.env.VITE_API_BASE_URL);
 
 // Create axios instance
 const api = axios.create({
@@ -8,11 +10,14 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
+    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    console.log('Request data:', config.data);
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -20,14 +25,21 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor to handle token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response:', response.status, response.config.url);
+    return response;
+  },
   async (error) => {
+    console.error('API Response Error:', error.response?.status, error.config?.url);
+    console.error('Error details:', error.response?.data);
+    
     const originalRequest = error.config;
 
     // Only handle 401 errors and avoid infinite loops
@@ -103,8 +115,26 @@ export const commentsAPI = {
   createComment: (commentData) => api.post('/comments/', commentData),
   updateComment: (id, commentData) => api.put(`/comments/${id}/`, commentData),
   deleteComment: (id) => api.delete(`/comments/${id}/`),
-  getReplies: (id) => api.get(`/comments/${id}/replies/`),
-  getCommentsByPost: (postId) => api.get(`/comments/by_post/?post_id=${postId}`),
+  getCommentsByPost: (postId) => api.get('/comments/by_post/', { params: { post_id: postId } }),
+  getReplies: (commentId) => api.get(`/comments/${commentId}/replies/`),
+};
+
+// Notifications API
+export const notificationsAPI = {
+  getNotifications: (params) => api.get('/notifications/', { params }),
+  getNotification: (id) => api.get(`/notifications/${id}/`),
+  createNotification: (notificationData) => api.post('/notifications/', notificationData),
+  updateNotification: (id, notificationData) => api.put(`/notifications/${id}/`, notificationData),
+  deleteNotification: (id) => api.delete(`/notifications/${id}/`),
+  getUnreadNotifications: () => api.get('/notifications/unread/'),
+  getNotificationSummary: () => api.get('/notifications/summary/'),
+  markAsRead: (id) => api.post(`/notifications/${id}/mark_as_read/`),
+  markAsUnread: (id) => api.post(`/notifications/${id}/mark_as_unread/`),
+  markAllAsRead: () => api.post('/notifications/mark_all_as_read/'),
+  markAllAsUnread: () => api.post('/notifications/mark_all_as_unread/'),
+  clearAllNotifications: () => api.delete('/notifications/clear_all/'),
+  getNotificationsByType: (type) => api.get('/notifications/by_type/', { params: { type } }),
+  searchNotifications: (query) => api.get('/notifications/search/', { params: { q: query } }),
 };
 
 // Admin API

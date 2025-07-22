@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
+import NotificationBell from './NotificationBell';
 
 const Navigation = () => {
   const { user, logout, theme, toggleTheme } = useContext(AuthContext);
@@ -49,6 +50,14 @@ const Navigation = () => {
                 Comments
               </Link>
             )}
+            {user && (
+              <Link
+                to="/notifications"
+                className={`nav-link ${isActive('/notifications') ? 'active' : ''}`}
+              >
+                Notifications
+              </Link>
+            )}
             {user?.role === 'ADMIN' && (
               <Link
                 to="/admin"
@@ -61,6 +70,9 @@ const Navigation = () => {
 
           {/* Right Side */}
           <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Notification Bell */}
+            {user && <NotificationBell />}
+            
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}

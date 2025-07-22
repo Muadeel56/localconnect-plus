@@ -19,13 +19,23 @@ const Register = () => {
   
   const { register } = useAuth();
   const navigate = useNavigate();
+  
+  console.log('Register component rendered');
+  console.log('useAuth register function:', register);
+  console.log('useNavigate function:', navigate);
+  console.log('Environment check - API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    console.log('Form field changed:', name, value);
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: value
+      };
+      console.log('Updated form data:', newData);
+      return newData;
+    });
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -36,6 +46,7 @@ const Register = () => {
   };
 
   const validateForm = () => {
+    console.log('Validating form with data:', formData);
     const newErrors = {};
     
     if (!formData.username.trim()) {
@@ -70,20 +81,31 @@ const Register = () => {
       newErrors.password2 = 'Passwords do not match';
     }
     
+    console.log('Validation errors:', newErrors);
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+    console.log('Form is valid:', isValid);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    alert('Form submitted!');
+    console.log('Register form submitted');
+    console.log('Event:', e);
+    console.log('Form data at submission:', formData);
     
     if (!validateForm()) {
+      console.log('Form validation failed');
       return;
     }
     
+    console.log('Form data:', formData);
     setIsLoading(true);
     
     try {
+      console.log('Calling register function...');
+      console.log('Register function:', register);
       const result = await register({
         username: formData.username,
         email: formData.email,
@@ -93,6 +115,8 @@ const Register = () => {
         password2: formData.password2,
         role: formData.role
       });
+      
+      console.log('Register result:', result);
       
       if (result.success) {
         setToast({
@@ -109,6 +133,7 @@ const Register = () => {
         });
       }
     } catch (error) {
+      console.error('Registration error:', error);
       setToast({
         type: 'error',
         message: 'An unexpected error occurred. Please try again.'
@@ -129,6 +154,11 @@ const Register = () => {
           duration={5000}
         />
       )}
+      
+      {/* Debug info */}
+      <div style={{ position: 'fixed', top: '10px', left: '10px', background: 'red', color: 'white', padding: '10px', zIndex: 9999 }}>
+        Toast: {toast ? `${toast.type}: ${toast.message}` : 'No toast'}
+      </div>
 
       <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary flex items-center justify-center p-4">
         <div className="w-full max-w-md">
@@ -146,7 +176,11 @@ const Register = () => {
           {/* Register Form */}
           <div className="card animate-fade-in">
             <div className="card-body">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6" id="register-form" onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  console.log('Enter key pressed in form');
+                }
+              }}>
                 {/* Username Field */}
                 <div className="form-group">
                   <label htmlFor="username" className="form-label">
@@ -365,9 +399,22 @@ const Register = () => {
 
                 {/* Submit Button */}
                 <button
-                  type="submit"
+                  type="button"
                   disabled={isLoading}
                   className="btn btn-primary w-full flex items-center justify-center space-x-2"
+                  onClick={(e) => {
+                    alert('Button clicked!');
+                    console.log('Button clicked');
+                    console.log('Form data:', formData);
+                    console.log('Form validation:', validateForm());
+                    // Manually trigger form submission
+                    if (validateForm()) {
+                      console.log('Form is valid, calling handleSubmit');
+                      handleSubmit(e);
+                    } else {
+                      console.log('Form is invalid, not submitting');
+                    }
+                  }}
                 >
                   {isLoading ? (
                     <>
@@ -382,6 +429,38 @@ const Register = () => {
                       <span>Create Account</span>
                     </>
                   )}
+                </button>
+                
+                {/* Test Button */}
+                <button
+                  type="button"
+                  className="btn btn-secondary w-full mt-4"
+                  onClick={async () => {
+                    console.log('Test button clicked');
+                    console.log('Current form data:', formData);
+                    console.log('Is loading:', isLoading);
+                    
+                    // Test API call with axios
+                    try {
+                      console.log('Testing API call with axios...');
+                      const axios = (await import('axios')).default;
+                      const response = await axios.post('http://localhost:8000/api/accounts/register/', {
+                        username: 'testuser2',
+                        email: 'test2@example.com',
+                        first_name: 'Test',
+                        last_name: 'User',
+                        password: 'testpass123',
+                        password2: 'testpass123',
+                        role: 'USER'
+                      });
+                      console.log('Axios API response status:', response.status);
+                      console.log('Axios API response data:', response.data);
+                    } catch (error) {
+                      console.error('Axios API test error:', error.response?.data || error.message);
+                    }
+                  }}
+                >
+                  Test API Call
                 </button>
               </form>
 
