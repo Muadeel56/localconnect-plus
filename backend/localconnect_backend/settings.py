@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     # Local apps
     'accounts',
     'posts',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -233,3 +234,8 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# Email Backend Settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development, prints emails to console
+DEFAULT_FROM_EMAIL = 'noreply@localconnect.com'
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')

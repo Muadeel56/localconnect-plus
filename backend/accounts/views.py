@@ -8,11 +8,12 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from .models import User
+from .models import User, EmailVerificationToken
 from .serializers import (
     UserRegistrationSerializer, UserProfileSerializer, UserUpdateSerializer,
     UserLoginSerializer, PasswordChangeSerializer, AdminUserSerializer
 )
+from .utils import generate_token, send_verification_email
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UserRegistrationView(generics.CreateAPIView):
@@ -29,8 +30,12 @@ class UserRegistrationView(generics.CreateAPIView):
             user = serializer.save()
             # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
+            # Generate and send email verification token
+            token = generate_token()
+            EmailVerificationToken.objects.create(user=user, token=token)
+            send_verification_email(user, token)
             return Response({
-                'message': 'User registered successfully',
+                'message': 'User registered successfully. Please check your email to verify your account.',
                 'user': UserProfileSerializer(user).data,
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
@@ -150,15 +155,24 @@ def current_user(request):
     return Response(serializer.data)
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def verify_email(request):
     """
-    Verify user email (placeholder for email verification)
+    Verify user email using token
     """
-    user = request.user
-    user.email_verified = True
-    user.save()
-    return Response({'message': 'Email verified successfully'})
+    token = request.data.get('token')
+    if not token:
+        return Response({'error': 'Token is required.'}, status=400)
+    try:
+        token_obj = EmailVerificationToken.objects.get(token=token, is_used=False)
+        user = token_obj.user
+        user.email_verified = True
+        user.save()
+        token_obj.is_used = True
+        token_obj.save()
+        return Response({'message': 'Email verified successfully.'})
+    except EmailVerificationToken.DoesNotExist:
+        return Response({'error': 'Invalid or expired token.'}, status=400)
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
@@ -177,3 +191,53 @@ def reset_password(request):
     """
     # This would validate the reset token and change password
     return Response({'message': 'Password reset successfully'})
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def get_verification_token(request):
+    """
+    Get verification token for testing purposes (development only)
+    """
+    username = request.query_params.get('username')
+    if not username:
+        return Response({'error': 'Username parameter is required.'}, status=400)
+    
+    try:
+        user = User.objects.get(username=username)
+        token_obj = EmailVerificationToken.objects.filter(user=user, is_used=False).first()
+        
+        if token_obj:
+            return Response({
+                'username': username,
+                'token': token_obj.token,
+                'created_at': token_obj.created_at
+            })
+        else:
+            return Response({'error': 'No unused verification token found for this user.'}, status=404)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found.'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def get_password_reset_token(request):
+    """
+    Get password reset token for testing purposes (development only)
+    """
+    username = request.query_params.get('username')
+    if not username:
+        return Response({'error': 'Username parameter is required.'}, status=400)
+    
+    try:
+        user = User.objects.get(username=username)
+        token_obj = PasswordResetToken.objects.filter(user=user, is_used=False).first()
+        
+        if token_obj:
+            return Response({
+                'username': username,
+                'token': token_obj.token,
+                'created_at': token_obj.created_at
+            })
+        else:
+            return Response({'error': 'No unused password reset token found for this user.'}, status=404)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found.'}, status=404)

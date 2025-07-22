@@ -23,6 +23,10 @@ urlpatterns = [
     # Email verification
     path('verify-email/', views.verify_email, name='verify-email'),
     
+    # Testing endpoints (development only)
+    path('get-verification-token/', views.get_verification_token, name='get-verification-token'),
+    path('get-password-reset-token/', views.get_password_reset_token, name='get-password-reset-token'),
+    
     # Admin endpoints
     path('admin/users/', views.AdminUserListView.as_view(), name='admin-users'),
     path('admin/users/<int:pk>/', views.AdminUserDetailView.as_view(), name='admin-user-detail'),

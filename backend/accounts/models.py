@@ -80,3 +80,21 @@ class User(AbstractUser):
     def can_manage_users(self):
         """Check if user can manage other users"""
         return self.role == self.Role.ADMIN
+
+class EmailVerificationToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_verification_tokens')
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"EmailVerificationToken({self.user.username}, {self.token})"
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"PasswordResetToken({self.user.username}, {self.token})"
