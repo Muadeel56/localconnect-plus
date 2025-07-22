@@ -8,12 +8,12 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from .models import User, EmailVerificationToken
+from .models import User, EmailVerificationToken, PasswordResetToken
 from .serializers import (
     UserRegistrationSerializer, UserProfileSerializer, UserUpdateSerializer,
     UserLoginSerializer, PasswordChangeSerializer, AdminUserSerializer
 )
-from .utils import generate_token, send_verification_email
+from .utils import generate_token, send_verification_email, send_password_reset_email
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UserRegistrationView(generics.CreateAPIView):
@@ -175,22 +175,45 @@ def verify_email(request):
         return Response({'error': 'Invalid or expired token.'}, status=400)
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def request_password_reset(request):
     """
-    Request password reset (placeholder for password reset functionality)
+    Request password reset: generate token, send email
     """
-    # This would typically send an email with reset link
-    return Response({'message': 'Password reset email sent'})
+    email = request.data.get('email')
+    if not email:
+        return Response({'error': 'Email is required.'}, status=400)
+    try:
+        user = User.objects.get(email=email)
+        # Generate and store token
+        token = generate_token()
+        PasswordResetToken.objects.create(user=user, token=token)
+        send_password_reset_email(user, token)
+        return Response({'message': 'Password reset email sent.'})
+    except User.DoesNotExist:
+        # For security, don't reveal if email exists
+        return Response({'message': 'Password reset email sent.'})
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def reset_password(request):
     """
-    Reset password with token (placeholder for password reset functionality)
+    Reset password with token
     """
-    # This would validate the reset token and change password
-    return Response({'message': 'Password reset successfully'})
+    token = request.data.get('token')
+    new_password = request.data.get('new_password')
+    if not token or not new_password:
+        return Response({'error': 'Token and new_password are required.'}, status=400)
+    try:
+        token_obj = PasswordResetToken.objects.get(token=token, is_used=False)
+        user = token_obj.user
+        user.set_password(new_password)
+        user.save()
+        token_obj.is_used = True
+        token_obj.save()
+        return Response({'message': 'Password reset successfully.'})
+    except PasswordResetToken.DoesNotExist:
+        return Response({'error': 'Invalid or expired token.'}, status=400)
 
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
