@@ -21,12 +21,22 @@ class IsOwnerOrAdmin(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object or admins.
     """
+    def has_permission(self, request, view):
+        # Allow all authenticated users to read
+        if request.method in permissions.SAFE_METHODS:
+            return request.user.is_authenticated
+        return True
+    
     def has_object_permission(self, request, view, obj):
         # Admin can access any object
         if request.user.is_admin:
             return True
         
-        # Check if the object has a user field
+        # For read operations, allow all authenticated users
+        if request.method in permissions.SAFE_METHODS:
+            return request.user.is_authenticated
+        
+        # For write operations, check ownership
         if hasattr(obj, 'user'):
             return obj.user == request.user
         elif hasattr(obj, 'author'):
@@ -39,6 +49,15 @@ class IsOwnerOrAdmin(permissions.BasePermission):
             return obj == request.user
         
         return False
+
+class CanViewPosts(permissions.BasePermission):
+    """
+    Custom permission to allow all authenticated users to view posts.
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return request.user.is_authenticated
+        return True
 
 class CanModeratePosts(permissions.BasePermission):
     """

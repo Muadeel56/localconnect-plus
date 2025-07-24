@@ -12,7 +12,7 @@ from .serializers import (
     PostSerializer, PostListSerializer, PostCreateSerializer,
     CommentSerializer, CommentCreateSerializer
 )
-from accounts.permissions import IsOwnerOrAdmin
+from accounts.permissions import IsOwnerOrAdmin, CanCreatePosts, CanEditPosts, CanDeletePosts, CanCreateComments, CanEditComments, CanDeleteComments
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -26,6 +26,20 @@ class PostViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'content', 'location', 'author__username']
     ordering_fields = ['created_at', 'updated_at', 'title', 'comment_count']
     ordering = ['-created_at']
+    
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action == 'create':
+            permission_classes = [CanCreatePosts]
+        elif self.action in ['update', 'partial_update']:
+            permission_classes = [CanEditPosts, IsOwnerOrAdmin]
+        elif self.action == 'destroy':
+            permission_classes = [CanDeletePosts, IsOwnerOrAdmin]
+        else:
+            permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrAdmin]
+        return [permission() for permission in permission_classes]
     
     def get_serializer_class(self):
         """Return appropriate serializer based on action"""
@@ -234,6 +248,20 @@ class CommentViewSet(viewsets.ModelViewSet):
     filterset_fields = ['post', 'author', 'parent']
     ordering_fields = ['created_at']
     ordering = ['created_at']
+    
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action == 'create':
+            permission_classes = [CanCreateComments]
+        elif self.action in ['update', 'partial_update']:
+            permission_classes = [CanEditComments, IsOwnerOrAdmin]
+        elif self.action == 'destroy':
+            permission_classes = [CanDeleteComments, IsOwnerOrAdmin]
+        else:
+            permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrAdmin]
+        return [permission() for permission in permission_classes]
     
     def get_serializer_class(self):
         """Return appropriate serializer based on action"""
