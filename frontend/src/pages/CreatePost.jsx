@@ -116,7 +116,7 @@ const CreatePost = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'var(--gradient-primary)' }}>
-            <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-12 h-12 text-[var(--color-dark-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </div>
@@ -147,7 +147,7 @@ const CreatePost = () => {
               {/* Title */}
               <div className="form-group">
                 <label className="form-label">
-                  Title <span className="text-error-500">*</span>
+                  Title <span className="text-[var(--color-error-500)]">*</span>
                 </label>
                 <input
                   type="text"
@@ -168,7 +168,7 @@ const CreatePost = () => {
               {/* Category */}
               <div className="form-group">
                 <label className="form-label">
-                  Category <span className="text-error-500">*</span>
+                  Category <span className="text-[var(--color-error-500)]">*</span>
                 </label>
                 <select
                   name="category"
@@ -188,7 +188,7 @@ const CreatePost = () => {
               {/* Content */}
               <div className="form-group">
                 <label className="form-label">
-                  Content <span className="text-error-500">*</span>
+                  Content <span className="text-[var(--color-error-500)]">*</span>
                 </label>
                 <textarea
                   name="content"
@@ -225,7 +225,7 @@ const CreatePost = () => {
               {/* Status */}
               <div className="form-group">
                 <label className="form-label">
-                  Status <span className="text-error-500">*</span>
+                  Status <span className="text-[var(--color-error-500)]">*</span>
                 </label>
                 <select
                   name="status"
@@ -286,8 +286,8 @@ const CreatePost = () => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center flex-shrink-0 mt-1">
-                  <span className="text-white text-xs font-bold">1</span>
+                <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-[var(--color-dark-text)] text-xs font-bold">1</span>
                 </div>
                 <div>
                   <h4 className="font-medium text-text-primary mb-1">Be Clear and Specific</h4>
@@ -295,8 +295,8 @@ const CreatePost = () => {
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center flex-shrink-0 mt-1">
-                  <span className="text-white text-xs font-bold">2</span>
+                <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-[var(--color-dark-text)] text-xs font-bold">2</span>
                 </div>
                 <div>
                   <h4 className="font-medium text-text-primary mb-1">Choose the Right Category</h4>
@@ -304,8 +304,8 @@ const CreatePost = () => {
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center flex-shrink-0 mt-1">
-                  <span className="text-white text-xs font-bold">3</span>
+                <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-[var(--color-dark-text)] text-xs font-bold">3</span>
                 </div>
                 <div>
                   <h4 className="font-medium text-text-primary mb-1">Include Location if Relevant</h4>
@@ -313,8 +313,8 @@ const CreatePost = () => {
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center flex-shrink-0 mt-1">
-                  <span className="text-white text-xs font-bold">4</span>
+                <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-[var(--color-dark-text)] text-xs font-bold">4</span>
                 </div>
                 <div>
                   <h4 className="font-medium text-text-primary mb-1">Be Respectful</h4>

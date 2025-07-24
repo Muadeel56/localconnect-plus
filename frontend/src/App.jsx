@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import Navigation from './components/Navigation';
@@ -19,6 +20,8 @@ const Comments = React.lazy(() => import('./pages/Comments'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Admin = React.lazy(() => import('./pages/Admin'));
 const Notifications = React.lazy(() => import('./pages/Notifications'));
+const RoleManagement = React.lazy(() => import('./pages/RoleManagement'));
+const Moderation = React.lazy(() => import('./pages/Moderation'));
 
 const App = () => {
   return (
@@ -43,10 +46,35 @@ const App = () => {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/role-management" element={<RoleManagement />} />
+                  <Route path="/moderation" element={<Moderation />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </React.Suspense>
             </main>
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-primary)',
+                },
+                success: {
+                  iconTheme: {
+                    primary: 'var(--color-success-500)',
+                    secondary: 'var(--color-dark-text)',
+                  },
+                },
+                error: {
+                  iconTheme: {
+                    primary: 'var(--color-error-500)',
+                    secondary: 'var(--color-dark-text)',
+                  },
+                },
+              }}
+            />
           </div>
         </Router>
       </NotificationProvider>

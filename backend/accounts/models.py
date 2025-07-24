@@ -81,6 +81,94 @@ class User(AbstractUser):
         """Check if user can manage other users"""
         return self.role == self.Role.ADMIN
 
+    def can_create_posts(self):
+        """Check if user can create posts"""
+        return self.is_authenticated and self.email_verified
+    
+    def can_edit_posts(self):
+        """Check if user can edit posts"""
+        return self.is_authenticated and (self.is_admin or self.is_volunteer)
+    
+    def can_delete_posts(self):
+        """Check if user can delete posts"""
+        return self.is_authenticated and (self.is_admin or self.is_volunteer)
+    
+    def can_create_comments(self):
+        """Check if user can create comments"""
+        return self.is_authenticated and self.email_verified
+    
+    def can_edit_comments(self):
+        """Check if user can edit comments"""
+        return self.is_authenticated and (self.is_admin or self.is_volunteer)
+    
+    def can_delete_comments(self):
+        """Check if user can delete comments"""
+        return self.is_authenticated and (self.is_admin or self.is_volunteer)
+    
+    def can_view_analytics(self):
+        """Check if user can view analytics"""
+        return self.is_authenticated and (self.is_admin or self.is_volunteer)
+    
+    def can_manage_roles(self):
+        """Check if user can manage roles"""
+        return self.is_authenticated and self.is_admin
+    
+    def can_access_admin_panel(self):
+        """Check if user can access admin panel"""
+        return self.is_authenticated and self.is_admin
+    
+    def can_promote_users(self):
+        """Check if user can promote other users"""
+        return self.is_authenticated and self.is_admin
+    
+    def can_demote_users(self):
+        """Check if user can demote other users"""
+        return self.is_authenticated and self.is_admin
+    
+    def can_ban_users(self):
+        """Check if user can ban other users"""
+        return self.is_authenticated and self.is_admin
+    
+    def can_view_user_details(self):
+        """Check if user can view detailed user information"""
+        return self.is_authenticated and (self.is_admin or self.is_volunteer)
+    
+    def can_manage_content(self):
+        """Check if user can manage content"""
+        return self.is_authenticated and (self.is_admin or self.is_volunteer)
+    
+    def can_view_reports(self):
+        """Check if user can view reports"""
+        return self.is_authenticated and (self.is_admin or self.is_volunteer)
+    
+    def can_handle_reports(self):
+        """Check if user can handle reports"""
+        return self.is_authenticated and self.is_admin
+    
+    def get_role_permissions(self):
+        """Get all permissions for the user's role"""
+        permissions = {
+            'can_create_posts': self.can_create_posts(),
+            'can_edit_posts': self.can_edit_posts(),
+            'can_delete_posts': self.can_delete_posts(),
+            'can_create_comments': self.can_create_comments(),
+            'can_edit_comments': self.can_edit_comments(),
+            'can_delete_comments': self.can_delete_comments(),
+            'can_moderate_posts': self.can_moderate_posts(),
+            'can_manage_users': self.can_manage_users(),
+            'can_view_analytics': self.can_view_analytics(),
+            'can_manage_roles': self.can_manage_roles(),
+            'can_access_admin_panel': self.can_access_admin_panel(),
+            'can_promote_users': self.can_promote_users(),
+            'can_demote_users': self.can_demote_users(),
+            'can_ban_users': self.can_ban_users(),
+            'can_view_user_details': self.can_view_user_details(),
+            'can_manage_content': self.can_manage_content(),
+            'can_view_reports': self.can_view_reports(),
+            'can_handle_reports': self.can_handle_reports(),
+        }
+        return permissions
+
 class EmailVerificationToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_verification_tokens')
     token = models.CharField(max_length=64, unique=True)

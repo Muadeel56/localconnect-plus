@@ -184,10 +184,10 @@ const Profile = () => {
 
   const getRoleColor = (role) => {
     switch (role) {
-      case 'ADMIN': return 'bg-error-500';
-      case 'VOLUNTEER': return 'bg-warning-500';
-      case 'USER': return 'bg-primary-500';
-      default: return 'bg-gray-500';
+      case 'ADMIN': return 'bg-[var(--color-error-500)]';
+      case 'VOLUNTEER': return 'bg-[var(--color-warning-500)]';
+      case 'USER': return 'bg-[var(--color-primary)]';
+      default: return 'bg-[var(--color-text-muted)]';
     }
   };
 
@@ -216,7 +216,7 @@ const Profile = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'var(--gradient-primary)' }}>
-            <span className="text-white font-bold text-2xl">
+            <span className="text-[var(--color-dark-text)] font-bold text-2xl">
               {user.username?.charAt(0).toUpperCase() || 'U'}
             </span>
           </div>
@@ -246,7 +246,7 @@ const Profile = () => {
             <div className="card">
               <div className="card-body text-center">
                 <div className="w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'var(--gradient-primary)' }}>
-                  <span className="text-white font-bold text-4xl">
+                  <span className="text-[var(--color-dark-text)] font-bold text-4xl">
                     {user.username?.charAt(0).toUpperCase() || 'U'}
                   </span>
                 </div>
@@ -255,7 +255,7 @@ const Profile = () => {
                   {user.username}
                 </h2>
                 
-                <span className={`px-3 py-1 rounded-full text-sm font-medium text-white ${getRoleColor(user.role)} mb-4 inline-block`}>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium text-[var(--color-dark-text)] ${getRoleColor(user.role)} mb-4 inline-block`}>
                   {getRoleDisplay(user.role)}
                 </span>
                 

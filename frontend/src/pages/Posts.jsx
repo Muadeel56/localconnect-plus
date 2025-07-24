@@ -121,11 +121,11 @@ const Posts = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'OPEN': return 'bg-success-500';
-      case 'IN_PROGRESS': return 'bg-warning-500';
-      case 'CLOSED': return 'bg-error-500';
-      case 'RESOLVED': return 'bg-primary-500';
-      default: return 'bg-gray-500';
+      case 'OPEN': return 'bg-[var(--color-success-500)]';
+      case 'IN_PROGRESS': return 'bg-[var(--color-warning-500)]';
+      case 'CLOSED': return 'bg-[var(--color-error-500)]';
+      case 'RESOLVED': return 'bg-[var(--color-primary)]';
+      default: return 'bg-[var(--color-text-muted)]';
     }
   };
 
@@ -152,7 +152,7 @@ const Posts = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
         </div>
       </div>
     );
@@ -328,7 +328,7 @@ const Posts = () => {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
-                      <span className="text-white font-medium">
+                      <span className="text-[var(--color-dark-text)] font-medium">
                         {post.author?.username?.charAt(0).toUpperCase() || 'U'}
                       </span>
                     </div>
@@ -341,7 +341,7 @@ const Posts = () => {
                       </p>
                     </div>
                   </div>
-                  <span className={`badge ${getStatusColor(post.status)} text-white text-xs`}>
+                  <span className={`badge ${getStatusColor(post.status)} text-[var(--color-dark-text)] text-xs`}>
                     {getStatusText(post.status)}
                   </span>
                 </div>
@@ -389,7 +389,7 @@ const Posts = () => {
       {/* Loading indicator for subsequent loads */}
       {loading && posts.length > 0 && (
         <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]"></div>
         </div>
       )}
 

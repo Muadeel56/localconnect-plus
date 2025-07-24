@@ -35,7 +35,7 @@ const CustomSelect = ({
           backgroundColor: 'var(--bg-card)',
           color: 'var(--text-primary)'
         }}
-        className="w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between"
+        className="w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] flex items-center justify-between"
       >
         <span style={{ color: selectedOption ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
           {selectedOption ? selectedOption.label : placeholder}

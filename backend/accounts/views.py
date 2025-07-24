@@ -8,12 +8,15 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.db import models
+from django.shortcuts import get_object_or_404
 from .models import User, EmailVerificationToken, PasswordResetToken
 from .serializers import (
     UserRegistrationSerializer, UserProfileSerializer, UserUpdateSerializer,
     UserLoginSerializer, PasswordChangeSerializer, AdminUserSerializer
 )
 from .utils import generate_token, send_verification_email, send_password_reset_email
+from .permissions import IsAdminUser, CanManageUsers, CanManageRoles
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UserRegistrationView(generics.CreateAPIView):
@@ -264,3 +267,183 @@ def get_password_reset_token(request):
             return Response({'error': 'No unused password reset token found for this user.'}, status=404)
     except User.DoesNotExist:
         return Response({'error': 'User not found.'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_user_permissions(request):
+    """
+    Get current user's permissions based on their role
+    """
+    if not request.user.is_authenticated:
+        return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    permissions = request.user.get_role_permissions()
+    return Response({
+        'user_id': request.user.id,
+        'username': request.user.username,
+        'role': request.user.role,
+        'permissions': permissions
+    })
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, CanManageRoles])
+def change_user_role(request):
+    """
+    Change a user's role (Admin only)
+    """
+    try:
+        user_id = request.data.get('user_id')
+        new_role = request.data.get('new_role')
+        
+        if not user_id or not new_role:
+            return Response({
+                'error': 'user_id and new_role are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate role
+        valid_roles = [choice[0] for choice in User.Role.choices]
+        if new_role not in valid_roles:
+            return Response({
+                'error': f'Invalid role. Valid roles are: {", ".join(valid_roles)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get user to change
+        user_to_change = get_object_or_404(User, id=user_id)
+        
+        # Prevent self-role change
+        if user_to_change == request.user:
+            return Response({
+                'error': 'Cannot change your own role'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Prevent changing other admin roles
+        if user_to_change.is_admin and not request.user.is_admin:
+            return Response({
+                'error': 'Only admins can change admin roles'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        old_role = user_to_change.role
+        user_to_change.role = new_role
+        user_to_change.save()
+        
+        return Response({
+            'message': f'User {user_to_change.username} role changed from {old_role} to {new_role}',
+            'user_id': user_to_change.id,
+            'username': user_to_change.username,
+            'old_role': old_role,
+            'new_role': new_role
+        })
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated, CanManageUsers])
+def get_users_list(request):
+    """
+    Get list of users (Admin and Volunteers can view)
+    """
+    try:
+        # Get query parameters
+        role_filter = request.query_params.get('role', None)
+        search_query = request.query_params.get('search', None)
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 20))
+        
+        # Start with all users
+        users = User.objects.all()
+        
+        # Apply role filter
+        if role_filter:
+            users = users.filter(role=role_filter)
+        
+        # Apply search filter
+        if search_query:
+            users = users.filter(
+                models.Q(username__icontains=search_query) |
+                models.Q(email__icontains=search_query) |
+                models.Q(first_name__icontains=search_query) |
+                models.Q(last_name__icontains=search_query)
+            )
+        
+        # Calculate pagination
+        total_count = users.count()
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        
+        # Get paginated results
+        users_page = users[start_index:end_index]
+        
+        # Serialize users (exclude sensitive info for non-admins)
+        if request.user.is_admin:
+            user_data = UserSerializer(users_page, many=True).data
+        else:
+            # For volunteers, show limited info
+            user_data = []
+            for user in users_page:
+                user_data.append({
+                    'id': user.id,
+                    'username': user.username,
+                    'role': user.role,
+                    'email_verified': user.email_verified,
+                    'created_at': user.created_at,
+                    'is_active': user.is_active
+                })
+        
+        return Response({
+            'users': user_data,
+            'pagination': {
+                'page': page,
+                'page_size': page_size,
+                'total_count': total_count,
+                'total_pages': (total_count + page_size - 1) // page_size
+            }
+        })
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, CanManageUsers])
+def toggle_user_status(request):
+    """
+    Toggle user active status (Admin only)
+    """
+    try:
+        user_id = request.data.get('user_id')
+        
+        if not user_id:
+            return Response({
+                'error': 'user_id is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get user to toggle
+        user_to_toggle = get_object_or_404(User, id=user_id)
+        
+        # Prevent self-deactivation
+        if user_to_toggle == request.user:
+            return Response({
+                'error': 'Cannot deactivate your own account'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Toggle status
+        user_to_toggle.is_active = not user_to_toggle.is_active
+        user_to_toggle.save()
+        
+        status_text = 'activated' if user_to_toggle.is_active else 'deactivated'
+        
+        return Response({
+            'message': f'User {user_to_toggle.username} has been {status_text}',
+            'user_id': user_to_toggle.id,
+            'username': user_to_toggle.username,
+            'is_active': user_to_toggle.is_active
+        })
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -161,7 +161,7 @@ const Notifications = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
         </div>
       </div>
     );
@@ -274,7 +274,7 @@ const Notifications = () => {
             <div
               key={notification.id}
               className={`card hover:shadow-lg transition-all duration-200 ${
-                !notification.is_read ? 'border-l-4 border-l-primary-500 bg-primary-50' : ''
+                !notification.is_read ? 'border-l-4 border-l-[var(--color-primary)] bg-[var(--color-primary)] bg-opacity-10' : ''
               }`}
             >
               <div className="card-body">
@@ -289,7 +289,7 @@ const Notifications = () => {
 
                   {/* Notification Icon */}
                   <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                    !notification.is_read ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-600'
+                    !notification.is_read ? 'bg-[var(--color-primary)] text-[var(--color-dark-text)]' : 'bg-[var(--color-surface)] text-[var(--color-text-muted)]'
                   }`}>
                     {getNotificationIcon(notification.notification_type)}
                   </div>

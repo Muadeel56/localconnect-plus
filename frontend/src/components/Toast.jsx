@@ -52,7 +52,7 @@ const Toast = ({ type = 'info', message, onClose, duration = 5000 }) => {
           </div>
           <button
             onClick={onClose}
-            className="flex-shrink-0 p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
+            className="flex-shrink-0 p-1 rounded-full hover:bg-[var(--color-dark-text)] hover:bg-opacity-20 transition-colors duration-200"
             aria-label="Close notification"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

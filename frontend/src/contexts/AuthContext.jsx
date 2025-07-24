@@ -33,6 +33,17 @@ export const AuthProvider = ({ children }) => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
   };
 
+  // Fetch user permissions from backend
+  const fetchUserPermissions = async () => {
+    try {
+      const response = await api.get('/accounts/permissions/');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch user permissions:', error);
+      return null;
+    }
+  };
+
   const login = async (credentials) => {
     try {
       const response = await api.post('/accounts/login/', credentials);
@@ -40,9 +51,16 @@ export const AuthProvider = ({ children }) => {
       
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
-      localStorage.setItem('user', JSON.stringify(userData));
       
-      setUser(userData);
+      // Fetch user permissions
+      const permissionsData = await fetchUserPermissions();
+      const userWithPermissions = {
+        ...userData,
+        permissions: permissionsData?.permissions || {}
+      };
+      
+      localStorage.setItem('user', JSON.stringify(userWithPermissions));
+      setUser(userWithPermissions);
       return { success: true };
     } catch (error) {
       return { 
@@ -63,9 +81,16 @@ export const AuthProvider = ({ children }) => {
       
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
-      localStorage.setItem('user', JSON.stringify(newUser));
       
-      setUser(newUser);
+      // Fetch user permissions
+      const permissionsData = await fetchUserPermissions();
+      const userWithPermissions = {
+        ...newUser,
+        permissions: permissionsData?.permissions || {}
+      };
+      
+      localStorage.setItem('user', JSON.stringify(userWithPermissions));
+      setUser(userWithPermissions);
       return { success: true };
     } catch (error) {
       console.error('Registration API error:', error);
@@ -129,6 +154,25 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
+  // Refresh user permissions
+  const refreshPermissions = async () => {
+    if (!user) return;
+    
+    try {
+      const permissionsData = await fetchUserPermissions();
+      if (permissionsData) {
+        const updatedUser = {
+          ...user,
+          permissions: permissionsData.permissions || {}
+        };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error('Failed to refresh permissions:', error);
+    }
+  };
+
   // Validate token and refresh if needed
   const validateAndRefreshToken = async () => {
     const token = localStorage.getItem('access_token');
@@ -143,8 +187,16 @@ export const AuthProvider = ({ children }) => {
       // Try to get current user with existing token
       const response = await api.get('/accounts/current-user/');
       const userData = response.data;
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Fetch user permissions
+      const permissionsData = await fetchUserPermissions();
+      const userWithPermissions = {
+        ...userData,
+        permissions: permissionsData?.permissions || {}
+      };
+      
+      setUser(userWithPermissions);
+      localStorage.setItem('user', JSON.stringify(userWithPermissions));
       return true;
     } catch (error) {
       if (error.response?.status === 401) {
@@ -160,8 +212,16 @@ export const AuthProvider = ({ children }) => {
           // Get user data with new token
           const userResponse = await api.get('/accounts/current-user/');
           const userData = userResponse.data;
-          setUser(userData);
-          localStorage.setItem('user', JSON.stringify(userData));
+          
+          // Fetch user permissions
+          const permissionsData = await fetchUserPermissions();
+          const userWithPermissions = {
+            ...userData,
+            permissions: permissionsData?.permissions || {}
+          };
+          
+          setUser(userWithPermissions);
+          localStorage.setItem('user', JSON.stringify(userWithPermissions));
           return true;
         } catch (refreshError) {
           console.error('Token refresh failed:', refreshError);
@@ -205,6 +265,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     validateAndRefreshToken,
+    refreshPermissions,
     theme,
     toggleTheme,
     isAuthenticated: !!user
