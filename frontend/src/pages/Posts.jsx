@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { postsAPI } from '../services/api';
@@ -12,6 +12,8 @@ const Posts = () => {
   const [toast, setToast] = useState(null);
   const [categories, setCategories] = useState([]);
   const [statuses, setStatuses] = useState([]);
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     category: '',
@@ -23,8 +25,23 @@ const Posts = () => {
   });
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [searchTimeout, setSearchTimeout] = useState(null);
+  const searchRef = useRef(null);
 
   const { user } = useAuth();
+
+  // Click outside handler for search suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Debounced search effect
   useEffect(() => {
@@ -41,6 +58,15 @@ const Posts = () => {
     return () => {
       if (timeout) clearTimeout(timeout);
     };
+  }, [filters.search]);
+
+  // Fetch search suggestions
+  useEffect(() => {
+    if (filters.search && filters.search.length >= 2) {
+      fetchSearchSuggestions(filters.search);
+    } else {
+      setSearchSuggestions([]);
+    }
   }, [filters.search]);
 
   // Fetch posts when filters change
@@ -82,6 +108,15 @@ const Posts = () => {
     }
   };
 
+  const fetchSearchSuggestions = async (query) => {
+    try {
+      const response = await postsAPI.getSearchSuggestions(query);
+      setSearchSuggestions(response.data);
+    } catch (err) {
+      console.error('Error fetching search suggestions:', err);
+    }
+  };
+
   const fetchCategories = async () => {
     try {
       const response = await postsAPI.getCategories();
@@ -105,6 +140,11 @@ const Posts = () => {
       ...prev,
       [key]: value
     }));
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    handleFilterChange('search', suggestion);
+    setShowSuggestions(false);
   };
 
   const clearFilters = () => {
@@ -148,6 +188,12 @@ const Posts = () => {
     });
   };
 
+  const highlightSearchTerm = (text, searchTerm) => {
+    if (!searchTerm || !text) return text || '';
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    return text.toString().replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">$1</mark>');
+  };
+
   if (loading && posts.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -179,26 +225,74 @@ const Posts = () => {
         )}
       </div>
 
+      {/* Quick Search Bar */}
+      <div className="card mb-6">
+        <div className="card-body">
+          <div className="relative" ref={searchRef}>
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-text-tertiary absolute left-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Quick search posts, categories, or locations..."
+                value={filters.search}
+                onChange={(e) => {
+                  handleFilterChange('search', e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                className="input input-bordered w-full pl-10 pr-4"
+              />
+              {filters.search && (
+                <button
+                  onClick={() => handleFilterChange('search', '')}
+                  className="absolute right-3 text-text-tertiary hover:text-text-primary"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            
+            {/* Search Suggestions Dropdown */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto" ref={searchRef}>
+                {searchSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full text-left px-4 py-2 hover:bg-[var(--color-background-hover)] transition-colors"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <svg className="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <span className="text-text-primary">{suggestion}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Advanced Filters */}
       <div className="card mb-8">
         <div className="card-body">
-          <h3 className="text-lg font-semibold mb-4">Advanced Filters</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Advanced Filters</h3>
+            <button
+              onClick={clearFilters}
+              className="btn btn-outline btn-sm"
+            >
+              Clear All
+            </button>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search */}
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Search
-              </label>
-              <input
-                type="text"
-                placeholder="Search posts..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="input input-bordered w-full"
-              />
-            </div>
-
             {/* Category */}
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">
@@ -246,23 +340,6 @@ const Posts = () => {
                 className="w-full"
               />
             </div>
-          </div>
-
-          {/* Additional Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            {/* Location */}
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Location
-              </label>
-              <input
-                type="text"
-                placeholder="Enter location..."
-                value={filters.location}
-                onChange={(e) => handleFilterChange('location', e.target.value)}
-                className="input input-bordered w-full"
-              />
-            </div>
 
             {/* Min Comments */}
             <div>
@@ -278,15 +355,44 @@ const Posts = () => {
                 min="0"
               />
             </div>
+          </div>
 
-            {/* Clear Filters */}
+          {/* Additional Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {/* Location */}
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-2">
+                Location
+              </label>
+              <input
+                type="text"
+                placeholder="Enter location..."
+                value={filters.location}
+                onChange={(e) => handleFilterChange('location', e.target.value)}
+                className="input input-bordered w-full"
+              />
+            </div>
+
+            {/* Active Filters Display */}
             <div className="flex items-end">
-              <button
-                onClick={clearFilters}
-                className="btn btn-outline w-full"
-              >
-                Clear Filters
-              </button>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(filters).map(([key, value]) => {
+                  if (value && key !== 'search') {
+                    return (
+                      <span key={key} className="badge badge-outline text-xs">
+                        {key}: {value}
+                        <button
+                          onClick={() => handleFilterChange(key, '')}
+                          className="ml-1 hover:text-error-500"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -296,6 +402,11 @@ const Posts = () => {
       <div className="flex justify-between items-center mb-6">
         <p className="text-text-secondary">
           {posts.length} post{posts.length !== 1 ? 's' : ''} found
+          {debouncedSearch && (
+            <span className="ml-2 text-primary-500">
+              for "{debouncedSearch}"
+            </span>
+          )}
         </p>
       </div>
 
@@ -313,7 +424,12 @@ const Posts = () => {
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📝</div>
           <h3 className="text-xl font-semibold text-text-primary mb-2">No posts found</h3>
-          <p className="text-text-secondary mb-6">Try adjusting your filters or create the first post!</p>
+          <p className="text-text-secondary mb-6">
+            {debouncedSearch 
+              ? `No posts match your search for "${debouncedSearch}". Try adjusting your search terms or filters.`
+              : 'Try adjusting your filters or create the first post!'
+            }
+          </p>
           {user && (
             <Link to="/posts/create" className="btn btn-primary">
               Create First Post
@@ -348,12 +464,16 @@ const Posts = () => {
 
                 <h3 className="text-lg font-semibold text-text-primary mb-2 line-clamp-2">
                   <Link to={`/posts/${post.id}`} className="hover:text-primary-500 transition-colors">
-                    {post.title}
+                    <span dangerouslySetInnerHTML={{ 
+                      __html: highlightSearchTerm(post.title, debouncedSearch) 
+                    }} />
                   </Link>
                 </h3>
 
                 <p className="text-text-secondary text-sm mb-4 line-clamp-3">
-                  {post.content}
+                  <span dangerouslySetInnerHTML={{ 
+                    __html: highlightSearchTerm(post.content, debouncedSearch) 
+                  }} />
                 </p>
 
                 <div className="flex items-center justify-between text-xs text-text-tertiary">
@@ -370,13 +490,17 @@ const Posts = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        {post.location}
+                        <span dangerouslySetInnerHTML={{ 
+                          __html: highlightSearchTerm(post.location, debouncedSearch) 
+                        }} />
                       </span>
                     )}
                   </div>
                   {post.category && (
                     <span className="badge badge-outline text-xs">
-                      {post.category}
+                      <span dangerouslySetInnerHTML={{ 
+                        __html: highlightSearchTerm(post.category, debouncedSearch) 
+                      }} />
                     </span>
                   )}
                 </div>
