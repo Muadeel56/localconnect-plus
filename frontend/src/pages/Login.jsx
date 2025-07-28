@@ -6,20 +6,22 @@ import Toast from '../components/Toast';
 const Login = () => {
   const [formData, setFormData] = useState({
     username: '',
-    password: ''
+    password: '',
+    remember: false
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     // Clear error when user starts typing
     if (errors[name]) {
@@ -57,7 +59,15 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const result = await login(formData);
+      // Send username and password directly (no conversion needed)
+      const loginData = {
+        username: formData.username,
+        password: formData.password
+      };
+      
+      console.log('Attempting login with:', loginData);
+      const result = await login(loginData);
+      console.log('Login result:', result);
       
       if (result.success) {
         setToast({
@@ -70,10 +80,11 @@ const Login = () => {
       } else {
         setToast({
           type: 'error',
-          message: result.error
+          message: result.error || 'Invalid credentials. Please try again.'
         });
       }
     } catch (error) {
+      console.error('Login error:', error);
       setToast({
         type: 'error',
         message: 'An unexpected error occurred. Please try again.'
@@ -83,144 +94,197 @@ const Login = () => {
     }
   };
 
+  const showToast = (type, message) => {
+    setToast({ type, message });
+  };
+
   return (
-    <>
+    <div className="min-h-screen bg-bg-primary flex items-center justify-center py-8 sm:py-12 lg:py-16 px-4 transition-all duration-300">
+      <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl mx-auto">
+        {/* Enhanced Card with better theme support */}
+        <div className="bg-bg-card border border-border-primary rounded-2xl shadow-2xl backdrop-blur-sm transition-all duration-300">
+          <div className="p-6 sm:p-8 lg:p-10">
+            {/* Header with improved styling */}
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg transition-all duration-300 hover:shadow-xl">
+                <svg className="w-10 h-10 sm:w-12 sm:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-3 transition-colors duration-300">
+                Welcome Back
+              </h1>
+              <p className="text-text-secondary text-base sm:text-lg transition-colors duration-300">
+                Sign in to your LocalConnect+ account
+              </p>
+            </div>
+
+            {/* Enhanced Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Username Field with improved UX */}
+              <div className="space-y-2">
+                <label htmlFor="username" className="block text-sm font-medium text-text-primary transition-colors duration-300">
+                  Username
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 pl-12 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      errors.username 
+                        ? 'border-red-500' 
+                        : 'border-border-primary bg-bg-secondary hover:bg-bg-tertiary focus:bg-bg-card'
+                    } text-text-primary placeholder-text-tertiary`}
+                    style={{
+                      backgroundColor: errors.username ? 'var(--error-bg-light)' : undefined,
+                      borderColor: errors.username ? 'var(--error-border)' : undefined
+                    }}
+                    placeholder="Enter your username"
+                    required
+                    disabled={isLoading}
+                  />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                </div>
+                {errors.username && (
+                  <p className="text-sm flex items-center animate-pulse" style={{ color: 'var(--error-text)' }}>
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {errors.username}
+                  </p>
+                )}
+              </div>
+
+              {/* Password Field with show/hide functionality */}
+              <div className="space-y-2">
+                <label htmlFor="password" className="block text-sm font-medium text-text-primary transition-colors duration-300">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 pl-12 pr-12 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      errors.password 
+                        ? 'border-red-500' 
+                        : 'border-border-primary bg-bg-secondary hover:bg-bg-tertiary focus:bg-bg-card'
+                    } text-text-primary placeholder-text-tertiary`}
+                    style={{
+                      backgroundColor: errors.password ? 'var(--error-bg-light)' : undefined,
+                      borderColor: errors.password ? 'var(--error-border)' : undefined
+                    }}
+                    placeholder="Enter your password"
+                    required
+                    disabled={isLoading}
+                  />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-tertiary hover:text-text-primary transition-colors duration-200"
+                    disabled={isLoading}
+                  >
+                    {showPassword ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm flex items-center animate-pulse" style={{ color: 'var(--error-text)' }}>
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {errors.password}
+                  </p>
+                )}
+              </div>
+
+              {/* Remember Me & Forgot Password with improved layout */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <label className="flex items-center space-x-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    name="remember"
+                    checked={formData.remember}
+                    onChange={handleChange}
+                    className="w-4 h-4 rounded border-border-primary text-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 bg-bg-secondary transition-all duration-200"
+                    disabled={isLoading}
+                  />
+                  <span className="text-sm text-text-secondary group-hover:text-text-primary transition-colors duration-200">
+                    Remember me
+                  </span>
+                </label>
+                <Link
+                  to="/request-password-reset"
+                  className="text-sm text-primary-500 hover:text-primary-600 transition-colors duration-200 font-medium hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              {/* Enhanced Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg hover:shadow-xl disabled:shadow-lg"
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Signing in...</span>
+                  </div>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
+            </form>
+
+            {/* Enhanced Sign Up Link */}
+            <div className="mt-8 text-center">
+              <p className="text-text-secondary transition-colors duration-300">
+                Don't have an account?{' '}
+                <Link
+                  to="/register"
+                  className="text-primary-500 hover:text-primary-600 font-semibold transition-colors duration-200 hover:underline"
+                >
+                  Sign up here
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Toast Notification */}
       {toast && (
         <Toast
           type={toast.type}
           message={toast.message}
           onClose={() => setToast(null)}
-          duration={5000}
         />
       )}
-
-      <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg" style={{ background: 'var(--gradient-primary)' }}>
-              <svg className="w-8 h-8 text-[var(--color-dark-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-              </svg>
-            </div>
-            <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome Back</h1>
-            <p className="text-text-secondary">Sign in to your LocalConnect+ account</p>
-          </div>
-
-          {/* Login Form */}
-          <div className="card animate-fade-in">
-            <div className="card-body">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Username Field */}
-                <div className="form-group">
-                  <label htmlFor="username" className="form-label">
-                    Username
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="username"
-                      name="username"
-                      value={formData.username}
-                      onChange={handleChange}
-                      className={`form-input ${errors.username ? 'border-error-500 focus:border-error-500 focus:ring-error-500' : ''}`}
-                      placeholder="Enter your username"
-                      disabled={isLoading}
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                      <svg className="w-5 h-5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                  </div>
-                  {errors.username && (
-                    <p className="mt-1 text-sm text-error-500 flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {errors.username}
-                    </p>
-                  )}
-                </div>
-
-                {/* Password Field */}
-                <div className="form-group">
-                  <label htmlFor="password" className="form-label">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className={`form-input ${errors.password ? 'border-error-500 focus:border-error-500 focus:ring-error-500' : ''}`}
-                      placeholder="Enter your password"
-                      disabled={isLoading}
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                      <svg className="w-5 h-5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                  </div>
-                  {errors.password && (
-                    <p className="mt-1 text-sm text-error-500 flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {errors.password}
-                    </p>
-                  )}
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full btn btn-primary py-3 text-lg font-semibold"
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="spinner w-5 h-5 mr-2"></div>
-                      Logging in...
-                    </div>
-                  ) : (
-                    'Login'
-                  )}
-                </button>
-              </form>
-
-              {/* Forgot Password Link */}
-              <div className="mt-4 text-center">
-                <Link 
-                  to="/request-password-reset" 
-                  className="text-sm text-accent hover:text-accent/80 font-medium"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
-
-              {/* Register Link */}
-              <div className="text-center mt-6">
-                <p className="text-sm text-text-secondary">
-                  Don't have an account?{' '}
-                  <Link 
-                    to="/register" 
-                    className="font-medium transition-colors duration-200 underline decoration-2 underline-offset-2"
-                    style={{ color: 'var(--primary-600)' }}
-                  >
-                    Sign up here
-                  </Link>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+    </div>
   );
 };
 

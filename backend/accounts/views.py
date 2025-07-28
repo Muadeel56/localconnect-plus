@@ -39,7 +39,7 @@ class UserRegistrationView(generics.CreateAPIView):
             send_verification_email(user, token)
             return Response({
                 'message': 'User registered successfully. Please check your email to verify your account.',
-                'user': UserProfileSerializer(user).data,
+                'user': UserProfileSerializer(user, context={'request': request}).data,
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
             }, status=status.HTTP_201_CREATED)
@@ -60,7 +60,7 @@ class UserLoginView(APIView):
             refresh = RefreshToken.for_user(user)
             return Response({
                 'message': 'Login successful',
-                'user': UserProfileSerializer(user).data,
+                'user': UserProfileSerializer(user, context={'request': request}).data,
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
             }, status=status.HTTP_200_OK)
@@ -99,6 +99,14 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     
     def get_object(self):
         return self.request.user
+    
+    def get_serializer_context(self):
+        """
+        Add request to serializer context for proper URL generation
+        """
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 class UserUpdateView(generics.UpdateAPIView):
     """
@@ -109,6 +117,23 @@ class UserUpdateView(generics.UpdateAPIView):
     
     def get_object(self):
         return self.request.user
+    
+    def put(self, request, *args, **kwargs):
+        """
+        Handle PUT request for profile update with file upload support
+        """
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            # Return full user data using UserProfileSerializer
+            from .serializers import UserProfileSerializer
+            full_serializer = UserProfileSerializer(instance, context={'request': request})
+            response_data = full_serializer.data
+            print(f"Profile update response data: {response_data}")
+            print(f"Profile picture URL: {response_data.get('profile_picture')}")
+            return Response(response_data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PasswordChangeView(APIView):
     """
@@ -154,7 +179,7 @@ def current_user(request):
     """
     Get current user information
     """
-    serializer = UserProfileSerializer(request.user)
+    serializer = UserProfileSerializer(request.user, context={'request': request})
     return Response(serializer.data)
 
 @api_view(['POST'])

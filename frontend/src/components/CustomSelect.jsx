@@ -5,7 +5,8 @@ const CustomSelect = ({
   onChange, 
   options, 
   placeholder = "Select an option",
-  className = ""
+  className = "",
+  size = "md"
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -25,24 +26,27 @@ const CustomSelect = ({
 
   const selectedOption = options.find(option => option.value === value);
 
+  // Size classes
+  const sizeClasses = {
+    sm: 'px-2 py-1.5 text-sm',
+    md: 'px-3 py-2 text-sm',
+    lg: 'px-4 py-2.5 text-base'
+  };
+
+  const sizeClass = sizeClasses[size] || sizeClasses.md;
+
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        style={{
-          border: '1px solid var(--border-primary)',
-          backgroundColor: 'var(--bg-card)',
-          color: 'var(--text-primary)'
-        }}
-        className="w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] flex items-center justify-between"
+        className={`w-full ${sizeClass} rounded-lg border border-border-primary bg-bg-card text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between transition-all duration-200 hover:bg-bg-secondary hover:border-border-secondary`}
       >
-        <span style={{ color: selectedOption ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+        <span className={selectedOption ? 'text-text-primary' : 'text-text-tertiary'}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <svg 
-          style={{ color: 'var(--text-secondary)' }}
-          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+          className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24"
@@ -52,13 +56,7 @@ const CustomSelect = ({
       </button>
 
       {isOpen && (
-        <div 
-          style={{
-            backgroundColor: 'var(--bg-card)',
-            border: '1px solid var(--border-primary)'
-          }}
-          className="absolute z-50 w-full mt-1 rounded-lg shadow-lg max-h-60 overflow-auto"
-        >
+        <div className="absolute z-50 w-full mt-1 rounded-lg border border-border-primary bg-bg-card shadow-lg max-h-60 overflow-auto animate-fade-in">
           {options.map((option) => (
             <button
               key={option.value}
@@ -67,11 +65,11 @@ const CustomSelect = ({
                 onChange(option.value);
                 setIsOpen(false);
               }}
-              style={{
-                color: option.value === value ? 'white' : 'var(--text-primary)',
-                backgroundColor: option.value === value ? 'var(--primary-500)' : 'transparent'
-              }}
-              className="w-full px-3 py-2 text-left transition-colors hover:bg-bg-secondary"
+              className={`w-full px-3 py-2 text-left transition-colors duration-150 ${
+                option.value === value 
+                  ? 'bg-primary-500 text-white' 
+                  : 'text-text-primary hover:bg-bg-secondary'
+              }`}
             >
               {option.label}
             </button>

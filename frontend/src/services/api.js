@@ -7,9 +7,6 @@ console.log('VITE_API_BASE_URL env var:', import.meta.env.VITE_API_BASE_URL);
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   timeout: 10000, // 10 second timeout
 });
 
@@ -18,6 +15,12 @@ api.interceptors.request.use(
   (config) => {
     console.log('API Request:', config.method?.toUpperCase(), config.url);
     console.log('Request data:', config.data);
+    
+    // Set Content-Type for non-FormData requests
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+    
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

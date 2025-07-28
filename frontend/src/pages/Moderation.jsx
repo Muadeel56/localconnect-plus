@@ -83,7 +83,7 @@ const Moderation = () => {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="min-h-screen bg-bg-primary transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -200,7 +200,7 @@ const Moderation = () => {
                         <div className="flex justify-between items-start mb-3">
                           <div>
                             <h4 className="font-semibold text-text-primary">{post.title}</h4>
-                            <p className="text-sm text-text-secondary">by {post.author}</p>
+                            <p className="text-sm text-text-secondary">by {post.author.first_name} {post.author.last_name}</p>
                           </div>
                           <div className="flex space-x-2">
                             <button
@@ -241,7 +241,7 @@ const Moderation = () => {
                       <div key={comment.id} className="border border-border-primary rounded-lg p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <p className="text-sm text-text-secondary">by {comment.author}</p>
+                            <p className="text-sm text-text-secondary">by {comment.author.first_name} {comment.author.last_name}</p>
                             <p className="text-sm text-text-secondary">on post: {comment.post_title}</p>
                           </div>
                           <div className="flex space-x-2">

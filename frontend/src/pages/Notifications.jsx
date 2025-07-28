@@ -179,7 +179,7 @@ const Notifications = () => {
         </div>
         
         {/* Actions */}
-        <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+        <div className="flex items-center space-x-3 mt-4 sm:mt-0">
           <CustomSelect
             value={filter}
             onChange={(value) => setFilter(value)}
@@ -188,7 +188,8 @@ const Notifications = () => {
               { value: 'unread', label: 'Unread Only' },
               { value: 'read', label: 'Read Only' },
             ]}
-            className="w-full"
+            className="w-48"
+            size="sm"
           />
           
           {unreadCount > 0 && (

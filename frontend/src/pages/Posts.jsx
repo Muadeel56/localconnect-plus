@@ -4,12 +4,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { postsAPI } from '../services/api';
 import Toast from '../components/Toast';
 import CustomSelect from '../components/CustomSelect';
+import Avatar from '../components/Avatar';
 
 const Posts = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [toast, setToast] = useState(null);
+
   const [categories, setCategories] = useState([]);
   const [statuses, setStatuses] = useState([]);
   const [searchSuggestions, setSearchSuggestions] = useState([]);
@@ -99,9 +100,12 @@ const Posts = () => {
       });
 
       const response = await postsAPI.getAllPosts(params);
-      setPosts(response.data.results || response.data);
+      // Handle both array and paginated response formats
+      const postsData = Array.isArray(response.data) ? response.data : response.data.results || [];
+      setPosts(postsData);
+      setError(null);
     } catch (err) {
-      setError('Failed to load posts');
+      setError('Failed to fetch posts. Please try again.');
       console.error('Error fetching posts:', err);
     } finally {
       setLoading(false);
@@ -120,7 +124,7 @@ const Posts = () => {
   const fetchCategories = async () => {
     try {
       const response = await postsAPI.getCategories();
-      setCategories(response.data);
+      setCategories(response.data.map(cat => cat.name));
     } catch (err) {
       console.error('Error fetching categories:', err);
     }
@@ -129,17 +133,14 @@ const Posts = () => {
   const fetchStatuses = async () => {
     try {
       const response = await postsAPI.getStatuses();
-      setStatuses(response.data);
+      setStatuses(response.data.map(status => ({ value: status.id, label: status.name })));
     } catch (err) {
       console.error('Error fetching statuses:', err);
     }
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSuggestionClick = (suggestion) => {
@@ -160,23 +161,23 @@ const Posts = () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'OPEN': return 'bg-[var(--color-success-500)]';
-      case 'IN_PROGRESS': return 'bg-[var(--color-warning-500)]';
-      case 'CLOSED': return 'bg-[var(--color-error-500)]';
-      case 'RESOLVED': return 'bg-[var(--color-primary)]';
-      default: return 'bg-[var(--color-text-muted)]';
-    }
+    const colorMap = {
+      'published': 'bg-green-500',
+      'draft': 'bg-yellow-500',
+      'pending': 'bg-blue-500',
+      'rejected': 'bg-red-500'
+    };
+    return colorMap[status] || 'bg-gray-500';
   };
 
   const getStatusText = (status) => {
-    switch (status) {
-      case 'OPEN': return 'Open';
-      case 'IN_PROGRESS': return 'In Progress';
-      case 'CLOSED': return 'Closed';
-      case 'RESOLVED': return 'Resolved';
-      default: return status;
-    }
+    const textMap = {
+      'published': 'Published',
+      'draft': 'Draft',
+      'pending': 'Pending',
+      'rejected': 'Rejected'
+    };
+    return textMap[status] || status;
   };
 
   const formatDate = (dateString) => {
@@ -189,48 +190,40 @@ const Posts = () => {
   };
 
   const highlightSearchTerm = (text, searchTerm) => {
-    if (!searchTerm || !text) return text || '';
+    if (!searchTerm || !text) return text;
     const regex = new RegExp(`(${searchTerm})`, 'gi');
-    return text.toString().replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">$1</mark>');
+    return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>');
   };
 
-  if (loading && posts.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-6 sm:py-8 lg:py-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Posts</h1>
-          <p className="text-text-secondary">Find and connect with your local community</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 lg:mb-12">
+        <div className="mb-4 sm:mb-0">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary mb-2">Posts</h1>
+          <p className="text-sm sm:text-base text-text-secondary">Find and connect with your local community</p>
         </div>
         {user && (
           <Link
             to="/posts/create"
-            className="btn btn-primary flex items-center space-x-2"
+            className="btn btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            <span>Create Post</span>
+            <span className="text-sm sm:text-base">Create Post</span>
           </Link>
         )}
       </div>
 
       {/* Quick Search Bar */}
-      <div className="card mb-6">
-        <div className="card-body">
+      <div className="card mb-6 sm:mb-8">
+        <div className="card-body p-4 sm:p-6">
           <div className="relative" ref={searchRef}>
             <div className="flex items-center">
-              <svg className="w-5 h-5 text-text-tertiary absolute left-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-text-tertiary absolute left-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
@@ -242,14 +235,14 @@ const Posts = () => {
                   setShowSuggestions(true);
                 }}
                 onFocus={() => setShowSuggestions(true)}
-                className="input input-bordered w-full pl-10 pr-4"
+                className="input input-bordered w-full pl-10 pr-10 sm:pr-12 text-sm sm:text-base"
               />
               {filters.search && (
                 <button
                   onClick={() => handleFilterChange('search', '')}
                   className="absolute right-3 text-text-tertiary hover:text-text-primary"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -263,10 +256,10 @@ const Posts = () => {
                   <button
                     key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className="w-full text-left px-4 py-2 hover:bg-[var(--color-background-hover)] transition-colors"
+                    className="w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-[var(--color-background-hover)] transition-colors text-sm sm:text-base"
                   >
                     <div className="flex items-center space-x-2">
-                      <svg className="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 sm:w-4 sm:h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                       <span className="text-text-primary">{suggestion}</span>
@@ -280,29 +273,29 @@ const Posts = () => {
       </div>
 
       {/* Advanced Filters */}
-      <div className="card mb-8">
-        <div className="card-body">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Advanced Filters</h3>
+      <div className="card mb-6 sm:mb-8">
+        <div className="card-body p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6">
+            <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-0">Advanced Filters</h3>
             <button
               onClick={clearFilters}
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm w-full sm:w-auto"
             >
               Clear All
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Category */}
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">
                 Category
               </label>
               <CustomSelect
-                options={[{ value: '', label: 'All Categories' }, ...categories]}
                 value={filters.category}
                 onChange={(value) => handleFilterChange('category', value)}
-                placeholder="Select Category"
+                options={categories.map(cat => ({ value: cat, label: cat }))}
+                placeholder="All Categories"
                 className="w-full"
               />
             </div>
@@ -313,52 +306,32 @@ const Posts = () => {
                 Status
               </label>
               <CustomSelect
-                options={[{ value: '', label: 'All Statuses' }, ...statuses]}
                 value={filters.status}
                 onChange={(value) => handleFilterChange('status', value)}
-                placeholder="Select Status"
+                options={statuses.map(status => ({ value: status.value, label: status.label }))}
+                placeholder="All Statuses"
                 className="w-full"
               />
             </div>
 
-            {/* Time Period */}
+            {/* Date Range */}
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">
-                Time Period
+                Date Range
               </label>
-              <CustomSelect
-                options={[
-                  { value: '', label: 'All Time' },
-                  { value: 'today', label: 'Today' },
-                  { value: 'week', label: 'This Week' },
-                  { value: 'month', label: 'This Month' },
-                  { value: 'year', label: 'This Year' }
-                ]}
-                value={filters.time_period}
-                onChange={(value) => handleFilterChange('time_period', value)}
-                placeholder="Select Time Period"
-                className="w-full"
-              />
+              <select
+                value={filters.date_range}
+                onChange={(e) => handleFilterChange('date_range', e.target.value)}
+                className="form-input w-full text-sm sm:text-base"
+              >
+                <option value="">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+              </select>
             </div>
 
-            {/* Min Comments */}
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Min Comments
-              </label>
-              <input
-                type="number"
-                placeholder="0"
-                value={filters.min_comments}
-                onChange={(e) => handleFilterChange('min_comments', e.target.value)}
-                className="input input-bordered w-full"
-                min="0"
-              />
-            </div>
-          </div>
-
-          {/* Additional Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             {/* Location */}
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">
@@ -369,161 +342,92 @@ const Posts = () => {
                 placeholder="Enter location..."
                 value={filters.location}
                 onChange={(e) => handleFilterChange('location', e.target.value)}
-                className="input input-bordered w-full"
+                className="form-input w-full text-sm sm:text-base"
               />
-            </div>
-
-            {/* Active Filters Display */}
-            <div className="flex items-end">
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(filters).map(([key, value]) => {
-                  if (value && key !== 'search') {
-                    return (
-                      <span key={key} className="badge badge-outline text-xs">
-                        {key}: {value}
-                        <button
-                          onClick={() => handleFilterChange(key, '')}
-                          className="ml-1 hover:text-error-500"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Results Count */}
-      <div className="flex justify-between items-center mb-6">
-        <p className="text-text-secondary">
-          {posts.length} post{posts.length !== 1 ? 's' : ''} found
-          {debouncedSearch && (
-            <span className="ml-2 text-primary-500">
-              for "{debouncedSearch}"
-            </span>
-          )}
-        </p>
-      </div>
-
       {/* Posts Grid */}
-      {error && (
-        <div className="alert alert-error mb-6">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{error}</span>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
         </div>
-      )}
-
-      {posts.length === 0 && !loading ? (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📝</div>
-          <h3 className="text-xl font-semibold text-text-primary mb-2">No posts found</h3>
-          <p className="text-text-secondary mb-6">
-            {debouncedSearch 
-              ? `No posts match your search for "${debouncedSearch}". Try adjusting your search terms or filters.`
-              : 'Try adjusting your filters or create the first post!'
-            }
-          </p>
-          {user && (
-            <Link to="/posts/create" className="btn btn-primary">
-              Create First Post
-            </Link>
-          )}
+      ) : error ? (
+        <div className="card">
+          <div className="card-body text-center">
+            <p className="text-text-secondary">Error loading posts: {error}</p>
+          </div>
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="card">
+          <div className="card-body text-center">
+            <p className="text-text-secondary">No posts found matching your criteria.</p>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map(post => (
-            <div key={post.id} className="card hover:shadow-lg transition-shadow">
-              <div className="card-body">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
-                      <span className="text-[var(--color-dark-text)] font-medium">
-                        {post.author?.username?.charAt(0).toUpperCase() || 'U'}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-text-primary text-sm">
-                        {post.author?.username || 'Anonymous'}
-                      </p>
-                      <p className="text-xs text-text-tertiary">
-                        {formatDate(post.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`badge ${getStatusColor(post.status)} text-[var(--color-dark-text)] text-xs`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+          {posts.map((post) => (
+            <div key={post.id} className="card hover:transform hover:scale-105 transition-all duration-300">
+              <div className="card-body p-4 sm:p-6">
+                <div className="flex justify-between items-start mb-3 sm:mb-4">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(post.status)}`}>
                     {getStatusText(post.status)}
                   </span>
+                  <span className="text-xs text-text-tertiary">
+                    {formatDate(post.created_at)}
+                  </span>
                 </div>
-
-                <h3 className="text-lg font-semibold text-text-primary mb-2 line-clamp-2">
-                  <Link to={`/posts/${post.id}`} className="hover:text-primary-500 transition-colors">
+                
+                <h3 className="text-lg sm:text-xl font-semibold text-text-primary mb-2 sm:mb-3 line-clamp-2">
+                  {filters.search ? (
                     <span dangerouslySetInnerHTML={{ 
-                      __html: highlightSearchTerm(post.title, debouncedSearch) 
+                      __html: highlightSearchTerm(post.title, filters.search) 
                     }} />
-                  </Link>
+                  ) : (
+                    post.title
+                  )}
                 </h3>
+                
 
-                <p className="text-text-secondary text-sm mb-4 line-clamp-3">
-                  <span dangerouslySetInnerHTML={{ 
-                    __html: highlightSearchTerm(post.content, debouncedSearch) 
-                  }} />
-                </p>
-
-                <div className="flex items-center justify-between text-xs text-text-tertiary">
-                  <div className="flex items-center space-x-4">
-                    <span className="flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                      {post.comment_count || 0}
+                
+                <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
+                  <span className="px-2 py-1 bg-bg-secondary rounded-full text-xs text-text-secondary">
+                    {post.category}
+                  </span>
+                  {post.location && (
+                    <span className="px-2 py-1 bg-bg-secondary rounded-full text-xs text-text-secondary">
+                      📍 {post.location}
                     </span>
-                    {post.location && (
-                      <span className="flex items-center">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span dangerouslySetInnerHTML={{ 
-                          __html: highlightSearchTerm(post.location, debouncedSearch) 
-                        }} />
-                      </span>
-                    )}
-                  </div>
-                  {post.category && (
-                    <span className="badge badge-outline text-xs">
-                      <span dangerouslySetInnerHTML={{ 
-                        __html: highlightSearchTerm(post.category, debouncedSearch) 
-                      }} />
-                    </span>
+                  )}
+                </div>
+                
+                <div className="flex justify-between items-center text-xs text-text-tertiary">
+                  <span>By {post.author.first_name} {post.author.last_name}</span>
+                  <span>{post.comment_count} comments</span>
+                </div>
+                
+                <div className="mt-4 sm:mt-6 flex gap-2">
+                  <Link
+                    to={`/posts/${post.id}`}
+                    className="btn btn-primary btn-sm flex-1 text-center"
+                  >
+                    View Details
+                  </Link>
+                  {user && (user.id === post.author.id || user.role === 'ADMIN' || user.role === 'MODERATOR') && (
+                    <Link
+                      to={`/posts/${post.id}/edit`}
+                      className="btn btn-secondary btn-sm"
+                    >
+                      Edit
+                    </Link>
                   )}
                 </div>
               </div>
             </div>
           ))}
         </div>
-      )}
-
-      {/* Loading indicator for subsequent loads */}
-      {loading && posts.length > 0 && (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]"></div>
-        </div>
-      )}
-
-      {/* Toast */}
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
       )}
     </div>
   );

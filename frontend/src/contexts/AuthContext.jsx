@@ -14,24 +14,6 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [theme, setTheme] = useState('light');
-
-  // Initialize theme from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  }, []);
-
-  // Update theme when it changes
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
 
   // Fetch user permissions from backend
   const fetchUserPermissions = async () => {
@@ -46,7 +28,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
+      console.log('AuthContext login called with:', credentials);
       const response = await api.post('/accounts/login/', credentials);
+      console.log('Login API response:', response.data);
+      
       const { access, refresh, user: userData } = response.data;
       
       localStorage.setItem('access_token', access);
@@ -63,6 +48,32 @@ export const AuthProvider = ({ children }) => {
       setUser(userWithPermissions);
       return { success: true };
     } catch (error) {
+      console.error('Login API error:', error);
+      console.error('Error response:', error.response?.data);
+      
+      // Handle backend validation errors
+      if (error.response?.data) {
+        const backendErrors = error.response.data;
+        let errorMessage = 'Login failed';
+        
+        // Check for specific field errors
+        if (backendErrors.username) {
+          errorMessage = Array.isArray(backendErrors.username) 
+            ? backendErrors.username[0] 
+            : backendErrors.username;
+        } else if (backendErrors.password) {
+          errorMessage = Array.isArray(backendErrors.password) 
+            ? backendErrors.password[0] 
+            : backendErrors.password;
+        } else if (backendErrors.non_field_errors) {
+          errorMessage = Array.isArray(backendErrors.non_field_errors) 
+            ? backendErrors.non_field_errors[0] 
+            : backendErrors.non_field_errors;
+        }
+        
+        return { success: false, error: errorMessage };
+      }
+      
       return { 
         success: false, 
         error: error.response?.data?.message || error.response?.data?.error || 'Login failed' 
@@ -72,7 +83,6 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     console.log('AuthContext register called with:', userData);
-    alert('Register function called!');
     try {
       console.log('Making API call to /accounts/register/');
       const response = await api.post('/accounts/register/', userData);
@@ -150,6 +160,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (userData) => {
+    console.log('AuthContext updateUser called with:', userData);
+    console.log('AuthContext updateUser - profile_picture:', userData?.profile_picture);
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
   };
@@ -257,6 +269,8 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+
+
   const value = {
     user,
     loading,
@@ -266,8 +280,6 @@ export const AuthProvider = ({ children }) => {
     updateUser,
     validateAndRefreshToken,
     refreshPermissions,
-    theme,
-    toggleTheme,
     isAuthenticated: !!user
   };
   

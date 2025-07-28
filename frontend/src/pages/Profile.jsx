@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
 import Loading from '../components/Loading';
 import Toast from '../components/Toast';
+import Avatar from '../components/Avatar';
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -28,9 +29,14 @@ const Profile = () => {
     location: '',
     phone: ''
   });
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState(null);
 
   useEffect(() => {
     if (user) {
+      console.log('Profile component - user data:', user);
+      console.log('Profile component - profile_picture:', user.profile_picture);
+      
       setFormData({
         username: user.username || '',
         email: user.email || '',
@@ -40,6 +46,7 @@ const Profile = () => {
         location: user.location || '',
         phone: user.phone || ''
       });
+      setProfilePicturePreview(user.profile_picture);
       setLoading(false);
     }
   }, [user]);
@@ -50,6 +57,32 @@ const Profile = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleProfilePictureChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Profile picture must be less than 5MB');
+        return;
+      }
+
+      setProfilePicture(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfilePicturePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handlePasswordChange = (e) => {
@@ -100,26 +133,12 @@ const Profile = () => {
     setChangingPassword(true);
     
     try {
-      await authAPI.changePassword({
-        old_password: passwordData.old_password,
-        new_password: passwordData.new_password,
-        new_password2: passwordData.confirm_password
-      });
-      
+      const response = await authAPI.changePassword(passwordData);
       setSuccess('Password changed successfully!');
+      setPasswordData({ old_password: '', new_password: '', confirm_password: '' });
       setShowChangePassword(false);
-      setPasswordData({
-        old_password: '',
-        new_password: '',
-        confirm_password: ''
-      });
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(null), 3000);
-      
-    } catch (err) {
-      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to change password. Please try again.');
-      console.error('Error changing password:', err);
+    } catch (error) {
+      setError(error.response?.data?.error || 'Failed to change password');
     } finally {
       setChangingPassword(false);
     }
@@ -128,27 +147,67 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    try {
       setSaving(true);
       setError(null);
+    setSuccess(null);
+    
+    try {
+      const formDataToSend = new FormData();
       
-      const response = await authAPI.updateProfile(formData);
+      // Add profile picture if selected
+      if (profilePicture) {
+        formDataToSend.append('profile_picture', profilePicture);
+      }
+      
+      // Add other form data
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== undefined && formData[key] !== null) {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+      
+      const response = await authAPI.updateProfile(formDataToSend);
+      
+      console.log('Profile update response:', response.data);
+      
+      // Update user context with new data
       updateUser(response.data);
+      
       setSuccess('Profile updated successfully!');
       setIsEditing(false);
+      setProfilePicture(null);
+    } catch (error) {
+      console.error('Profile update error:', error.response?.data);
       
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(null), 3000);
-      
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
-      console.error('Error updating profile:', err);
+      // Handle validation errors
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (typeof errorData === 'object') {
+          // Handle field-specific errors
+          const errorMessages = [];
+          Object.keys(errorData).forEach(field => {
+            if (Array.isArray(errorData[field])) {
+              errorMessages.push(`${field}: ${errorData[field].join(', ')}`);
+            } else if (typeof errorData[field] === 'string') {
+              errorMessages.push(errorData[field]);
+            }
+          });
+          setError(errorMessages.join('\n'));
+        } else {
+          setError(errorData);
+        }
+      } else {
+        setError('Failed to update profile');
+      }
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancel = () => {
+    setIsEditing(false);
+    setProfilePicture(null);
+    setProfilePicturePreview(user.profile_picture);
     setFormData({
       username: user.username || '',
       email: user.email || '',
@@ -158,101 +217,106 @@ const Profile = () => {
       location: user.location || '',
       phone: user.phone || ''
     });
-    setIsEditing(false);
-    setError(null);
   };
 
   const handleCancelPassword = () => {
     setShowChangePassword(false);
-    setPasswordData({
-      old_password: '',
-      new_password: '',
-      confirm_password: ''
-    });
+    setPasswordData({ old_password: '', new_password: '', confirm_password: '' });
     setPasswordErrors({});
-    setError(null);
   };
 
   const getRoleDisplay = (role) => {
-    switch (role) {
-      case 'ADMIN': return 'Administrator';
-      case 'VOLUNTEER': return 'Volunteer';
-      case 'USER': return 'User';
-      default: return role;
-    }
+    const roleMap = {
+      'ADMIN': 'Administrator',
+      'VOLUNTEER': 'Volunteer',
+      'USER': 'User'
+    };
+    return roleMap[role] || role;
   };
 
   const getRoleColor = (role) => {
-    switch (role) {
-      case 'ADMIN': return 'bg-[var(--color-error-500)]';
-      case 'VOLUNTEER': return 'bg-[var(--color-warning-500)]';
-      case 'USER': return 'bg-[var(--color-primary)]';
-      default: return 'bg-[var(--color-text-muted)]';
-    }
+    const colorMap = {
+      'ADMIN': 'bg-red-500',
+      'VOLUNTEER': 'bg-blue-500',
+      'USER': 'bg-green-500'
+    };
+    return colorMap[role] || 'bg-gray-500';
   };
 
   if (loading) {
     return <Loading fullScreen text="Loading profile..." />;
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary py-8">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="card text-center">
-            <div className="card-body">
-              <h2 className="text-2xl font-bold text-text-primary mb-4">Sign In Required</h2>
-              <p className="text-text-secondary mb-6">You need to be signed in to view your profile.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <>
+      {/* Toast Notifications */}
+      {error && (
+        <Toast
+          type="error"
+          message={error}
+          onClose={() => setError(null)}
+          duration={5000}
+        />
+      )}
+      
+      {success && (
+        <Toast
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
+          duration={5000}
+        />
+      )}
+
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'var(--gradient-primary)' }}>
-            <span className="text-[var(--color-dark-text)] font-bold text-2xl">
-              {user.username?.charAt(0).toUpperCase() || 'U'}
-            </span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
-            My Profile
-          </h1>
-          <p className="text-xl text-text-secondary max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold gradient-text mb-2">My Profile</h1>
+          <p className="text-text-secondary text-lg">
             Manage your account information and preferences
           </p>
         </div>
-
-        {/* Error/Success Messages */}
-        {error && (
-          <div className="mb-8">
-            <Toast type="error" message={error} onClose={() => setError(null)} />
-          </div>
-        )}
-        {success && (
-          <div className="mb-8">
-            <Toast type="success" message={success} onClose={() => setSuccess(null)} />
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Card */}
           <div className="lg:col-span-1">
             <div className="card">
               <div className="card-body text-center">
-                <div className="w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'var(--gradient-primary)' }}>
-                  <span className="text-[var(--color-dark-text)] font-bold text-4xl">
-                    {user.username?.charAt(0).toUpperCase() || 'U'}
-                  </span>
+                {/* Profile Picture Section */}
+                <div className="mb-6">
+                  <div className="relative inline-block">
+                    <Avatar user={user} size="3xl" />
+                    
+                    {isEditing && (
+                      <div className="absolute bottom-0 right-0">
+                        <label htmlFor="profile-picture" className="cursor-pointer">
+                          <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center text-white hover:bg-primary-600 transition-colors">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          </div>
+                        </label>
+                        <input
+                          id="profile-picture"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePictureChange}
+                          className="hidden"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {profilePicturePreview && profilePicturePreview !== user.profile_picture && (
+                    <div className="mt-2 text-xs text-text-secondary">
+                      Preview of new profile picture
+                    </div>
+                  )}
                 </div>
                 
                 <h2 className="text-2xl font-bold text-text-primary mb-2">
-                  {user.username}
+                  {user.username.charAt(0).toUpperCase() + user.username.slice(1).toLowerCase()}
                 </h2>
                 
                 <span className={`px-3 py-1 rounded-full text-sm font-medium text-[var(--color-dark-text)] ${getRoleColor(user.role)} mb-4 inline-block`}>
@@ -264,7 +328,7 @@ const Profile = () => {
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    Member since {new Date(user.created_at).toLocaleDateString()}
+                    Member since {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Recently'}
                   </div>
                   
                   {user.email_verified && (
@@ -381,7 +445,6 @@ const Profile = () => {
                         onChange={handleInputChange}
                         className="form-input"
                         disabled={!isEditing}
-                        placeholder="City, State"
                       />
                     </div>
                   </div>
@@ -396,40 +459,35 @@ const Profile = () => {
                       className="form-input"
                       disabled={!isEditing}
                       rows="4"
-                      placeholder="Tell us about yourself..."
                       maxLength="500"
+                      placeholder="Tell us about yourself..."
                     />
-                    <p className="text-sm text-text-tertiary mt-1">
+                    <div className="text-xs text-text-secondary mt-1">
                       {formData.bio.length}/500 characters
-                    </p>
+                    </div>
                   </div>
 
-                  {/* Form Actions */}
+                  {/* Action Buttons */}
                   {isEditing && (
-                    <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-border-primary">
+                    <div className="flex items-center space-x-3 pt-4">
                       <button
                         type="submit"
                         disabled={saving}
-                        className="btn btn-primary flex-1"
+                        className="btn btn-primary"
                       >
                         {saving ? (
-                          <>
-                            <Loading text="Saving..." />
-                            Saving Changes...
-                          </>
+                          <div className="flex items-center">
+                            <div className="spinner w-4 h-4 mr-2"></div>
+                            Saving...
+                          </div>
                         ) : (
-                          <>
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Save Changes
-                          </>
+                          'Save Changes'
                         )}
                       </button>
                       <button
                         type="button"
                         onClick={handleCancel}
-                        className="btn btn-secondary flex-1"
+                        className="btn btn-secondary"
                       >
                         Cancel
                       </button>
@@ -440,128 +498,111 @@ const Profile = () => {
             </div>
 
             {/* Account Actions */}
-            <div className="card mt-8">
+            <div className="card mt-6">
               <div className="card-body">
-                <h3 className="text-lg font-semibold text-text-primary mb-4">
+                <h3 className="text-xl font-semibold text-text-primary mb-4">
                   Account Actions
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <div className="space-y-3">
                   <button 
                     onClick={() => setShowChangePassword(true)}
-                    className="btn btn-secondary w-full"
+                    className="w-full flex items-center justify-between p-4 rounded-lg border border-border-primary hover:bg-bg-secondary transition-colors"
                   >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 mr-3 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                      </svg>
+                      <span className="text-text-primary">Change Password</span>
+                    </div>
+                    <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
-                    Change Password
                   </button>
-                  <button className="btn btn-secondary w-full">
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  
+                  <button
+                    className="w-full flex items-center justify-between p-4 rounded-lg border border-border-primary hover:bg-bg-secondary transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 mr-3 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-text-primary">Email Settings</span>
+                    </div>
+                    <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
-                    Email Settings
                   </button>
+                </div>
+              </div>
+            </div>
                 </div>
               </div>
             </div>
 
             {/* Change Password Modal */}
             {showChangePassword && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div className="bg-bg-secondary rounded-lg shadow-xl max-w-md w-full p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-text-primary">
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'var(--bg-overlay)' }}>
+          <div className="bg-card rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-text-primary mb-4">
                       Change Password
                     </h3>
-                    <button
-                      onClick={handleCancelPassword}
-                      className="text-text-secondary hover:text-text-primary"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
 
                   <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                    {/* Current Password */}
                     <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">
-                        Current Password
-                      </label>
+                  <label className="form-label">Current Password</label>
                       <input
                         type="password"
                         name="old_password"
                         value={passwordData.old_password}
                         onChange={handlePasswordChange}
-                        className={`w-full px-4 py-3 rounded-lg border transition-colors ${
-                          passwordErrors.old_password
-                            ? 'border-error bg-error/10 text-error'
-                            : 'border-border bg-bg-primary text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20'
-                        }`}
-                        placeholder="Enter current password"
-                        disabled={changingPassword}
+                    className="form-input"
+                    required
                       />
                       {passwordErrors.old_password && (
-                        <p className="mt-1 text-sm text-error">{passwordErrors.old_password}</p>
+                    <p className="text-error text-sm mt-1">{passwordErrors.old_password}</p>
                       )}
                     </div>
 
-                    {/* New Password */}
                     <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">
-                        New Password
-                      </label>
+                  <label className="form-label">New Password</label>
                       <input
                         type="password"
                         name="new_password"
                         value={passwordData.new_password}
                         onChange={handlePasswordChange}
-                        className={`w-full px-4 py-3 rounded-lg border transition-colors ${
-                          passwordErrors.new_password
-                            ? 'border-error bg-error/10 text-error'
-                            : 'border-border bg-bg-primary text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20'
-                        }`}
-                        placeholder="Enter new password"
-                        disabled={changingPassword}
+                    className="form-input"
+                    required
                       />
                       {passwordErrors.new_password && (
-                        <p className="mt-1 text-sm text-error">{passwordErrors.new_password}</p>
+                    <p className="text-error text-sm mt-1">{passwordErrors.new_password}</p>
                       )}
                     </div>
 
-                    {/* Confirm New Password */}
                     <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">
-                        Confirm New Password
-                      </label>
+                  <label className="form-label">Confirm New Password</label>
                       <input
                         type="password"
                         name="confirm_password"
                         value={passwordData.confirm_password}
                         onChange={handlePasswordChange}
-                        className={`w-full px-4 py-3 rounded-lg border transition-colors ${
-                          passwordErrors.confirm_password
-                            ? 'border-error bg-error/10 text-error'
-                            : 'border-border bg-bg-primary text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20'
-                        }`}
-                        placeholder="Confirm new password"
-                        disabled={changingPassword}
+                    className="form-input"
+                    required
                       />
                       {passwordErrors.confirm_password && (
-                        <p className="mt-1 text-sm text-error">{passwordErrors.confirm_password}</p>
+                    <p className="text-error text-sm mt-1">{passwordErrors.confirm_password}</p>
                       )}
                     </div>
 
-                    {/* Form Actions */}
-                    <div className="flex gap-4 pt-4">
+                <div className="flex items-center space-x-3 pt-4">
                       <button
                         type="submit"
                         disabled={changingPassword}
                         className="btn btn-primary flex-1"
                       >
                         {changingPassword ? (
-                          <div className="flex items-center justify-center">
+                      <div className="flex items-center">
                             <div className="spinner w-4 h-4 mr-2"></div>
                             Changing...
                           </div>
@@ -573,19 +614,16 @@ const Profile = () => {
                         type="button"
                         onClick={handleCancelPassword}
                         className="btn btn-secondary flex-1"
-                        disabled={changingPassword}
                       >
                         Cancel
                       </button>
                     </div>
                   </form>
                 </div>
-              </div>
-            )}
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 

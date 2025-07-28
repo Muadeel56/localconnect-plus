@@ -98,7 +98,7 @@ const NotificationBell = () => {
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-card rounded-lg shadow-lg border border-primary z-50">
+        <div className="absolute right-0 mt-2 w-80 bg-bg-card border border-border-primary rounded-lg shadow-lg z-50">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border-primary">
             <h3 className="text-lg font-semibold text-text-primary">Notifications</h3>

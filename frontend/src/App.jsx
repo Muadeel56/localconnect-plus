@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import RequestPasswordReset from './pages/RequestPasswordReset';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 
 // Lazy load other pages
 const Posts = React.lazy(() => import('./pages/Posts'));
@@ -28,7 +29,7 @@ const App = () => {
     <AuthProvider>
       <NotificationProvider>
         <Router>
-          <div className="App min-h-screen bg-bg-primary text-text-primary">
+          <div className="App min-h-screen bg-bg-primary text-text-primary transition-all duration-300">
             <Navigation />
             <main>
               <React.Suspense fallback={<Loading fullScreen text="Loading..." />}>
@@ -36,6 +37,7 @@ const App = () => {
                   <Route path="/" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/request-password-reset" element={<RequestPasswordReset />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/posts" element={<Posts />} />
