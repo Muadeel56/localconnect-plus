@@ -67,7 +67,7 @@ const CustomSelect = ({
               }}
               className={`w-full px-3 py-2 text-left transition-colors duration-150 ${
                 option.value === value 
-                  ? 'bg-primary-500 text-white' 
+                  ? 'bg-primary text-white' 
                   : 'text-text-primary hover:bg-bg-secondary'
               }`}
             >

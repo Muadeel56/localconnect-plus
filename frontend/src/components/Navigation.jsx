@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import NotificationBell from './NotificationBell';
 import Avatar from './Avatar';
+import ThemeToggle from './ThemeToggle';
 import { AdminOnly, ModeratorOnly, AuthenticatedOnly } from './RoleBasedUI';
 
 const Navigation = () => {
@@ -118,6 +119,9 @@ const Navigation = () => {
 
           {/* Right Side */}
           <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
             {/* Notification Bell */}
             <AuthenticatedOnly>
               <NotificationBell />
@@ -277,6 +281,11 @@ const Navigation = () => {
           {/* Drawer Content */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 space-y-2">
+              {/* Theme Toggle in Mobile Menu */}
+              <div className="flex justify-center mb-4">
+                <ThemeToggle size="lg" />
+              </div>
+              
               {/* User Info Section */}
               {user && (
                 <div className="p-4 bg-bg-secondary rounded-lg mb-6">

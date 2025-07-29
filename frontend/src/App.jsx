@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Navigation from './components/Navigation';
 import Loading from './components/Loading';
 import Login from './pages/Login';
@@ -26,10 +27,11 @@ const Moderation = React.lazy(() => import('./pages/Moderation'));
 
 const App = () => {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <Router>
-          <div className="App min-h-screen bg-bg-primary text-text-primary transition-all duration-300">
+    <ThemeProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <Router>
+            <div className="App min-h-screen bg-bg-primary text-text-primary">
             <Navigation />
             <main>
               <React.Suspense fallback={<Loading fullScreen text="Loading..." />}>
@@ -81,6 +83,7 @@ const App = () => {
         </Router>
       </NotificationProvider>
     </AuthProvider>
+    </ThemeProvider>
   );
 };
 
