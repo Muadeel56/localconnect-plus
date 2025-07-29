@@ -116,14 +116,14 @@ class PostViewSet(viewsets.ModelViewSet):
                 month_ago = now - timedelta(days=30)
                 queryset = queryset.filter(created_at__gte=month_ago)
         
-        # Popularity filtering (by comment count)
+        # Popularity filtering (by comment count) - only annotate when needed
         min_comments = self.request.query_params.get('min_comments', None)
         if min_comments:
             try:
                 min_comments_int = int(min_comments)
                 queryset = queryset.annotate(
-                    comment_count=models_Count('comments', filter=Q(comments__is_deleted=False))
-                ).filter(comment_count__gte=min_comments_int)
+                    comment_count_annotated=models_Count('comments', filter=Q(comments__is_deleted=False))
+                ).filter(comment_count_annotated__gte=min_comments_int)
             except ValueError:
                 pass
         

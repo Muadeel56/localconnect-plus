@@ -11,8 +11,21 @@ const Posts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [categories, setCategories] = useState([]);
-  const [statuses, setStatuses] = useState([]);
+  const [categories, setCategories] = useState([
+    { value: 'GENERAL', label: 'General' },
+    { value: 'FOOD', label: 'Food & Groceries' },
+    { value: 'TRANSPORT', label: 'Transportation' },
+    { value: 'MEDICAL', label: 'Medical & Health' },
+    { value: 'EDUCATION', label: 'Education' },
+    { value: 'TECHNOLOGY', label: 'Technology' },
+    { value: 'OTHER', label: 'Other' }
+  ]);
+  const [statuses, setStatuses] = useState([
+    { value: 'OPEN', label: 'Open' },
+    { value: 'IN_PROGRESS', label: 'In Progress' },
+    { value: 'CLOSED', label: 'Closed' },
+    { value: 'RESOLVED', label: 'Resolved' }
+  ]);
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filters, setFilters] = useState({
@@ -20,7 +33,6 @@ const Posts = () => {
     category: '',
     status: '',
     date_range: '',
-    time_period: '',
     min_comments: '',
     location: ''
   });
@@ -33,8 +45,13 @@ const Posts = () => {
   // Click outside handler for search suggestions
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Only handle clicks outside search suggestions, not other dropdowns
       if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setShowSuggestions(false);
+        // Check if the click is on a CustomSelect dropdown
+        const isCustomSelectClick = event.target.closest('[data-custom-select]');
+        if (!isCustomSelectClick) {
+          setShowSuggestions(false);
+        }
       }
     };
 
@@ -73,7 +90,7 @@ const Posts = () => {
   // Fetch posts when filters change
   useEffect(() => {
     fetchPosts();
-  }, [debouncedSearch, filters.category, filters.status, filters.date_range, filters.time_period, filters.min_comments, filters.location]);
+  }, [debouncedSearch, filters.category, filters.status, filters.date_range, filters.min_comments, filters.location]);
 
   // Fetch categories and statuses on component mount
   useEffect(() => {
@@ -88,8 +105,7 @@ const Posts = () => {
         search: debouncedSearch,
         category: filters.category,
         status: filters.status,
-        date_range: filters.date_range,
-        time_period: filters.time_period,
+        time_filter: filters.date_range,
         min_comments: filters.min_comments,
         location: filters.location
       };
@@ -124,18 +140,37 @@ const Posts = () => {
   const fetchCategories = async () => {
     try {
       const response = await postsAPI.getCategories();
-      setCategories(response.data.map(cat => cat.name));
+      console.log('Categories fetched:', response.data);
+      setCategories(response.data);
     } catch (err) {
       console.error('Error fetching categories:', err);
+      // Fallback to hardcoded categories if API fails
+      setCategories([
+        { value: 'GENERAL', label: 'General' },
+        { value: 'FOOD', label: 'Food & Groceries' },
+        { value: 'TRANSPORT', label: 'Transportation' },
+        { value: 'MEDICAL', label: 'Medical & Health' },
+        { value: 'EDUCATION', label: 'Education' },
+        { value: 'TECHNOLOGY', label: 'Technology' },
+        { value: 'OTHER', label: 'Other' }
+      ]);
     }
   };
 
   const fetchStatuses = async () => {
     try {
       const response = await postsAPI.getStatuses();
-      setStatuses(response.data.map(status => ({ value: status.id, label: status.name })));
+      console.log('Statuses fetched:', response.data);
+      setStatuses(response.data);
     } catch (err) {
       console.error('Error fetching statuses:', err);
+      // Fallback to hardcoded statuses if API fails
+      setStatuses([
+        { value: 'OPEN', label: 'Open' },
+        { value: 'IN_PROGRESS', label: 'In Progress' },
+        { value: 'CLOSED', label: 'Closed' },
+        { value: 'RESOLVED', label: 'Resolved' }
+      ]);
     }
   };
 
@@ -154,7 +189,6 @@ const Posts = () => {
       category: '',
       status: '',
       date_range: '',
-      time_period: '',
       min_comments: '',
       location: ''
     });
@@ -162,20 +196,20 @@ const Posts = () => {
 
   const getStatusColor = (status) => {
     const colorMap = {
-      'published': 'bg-green-500',
-      'draft': 'bg-yellow-500',
-      'pending': 'bg-blue-500',
-      'rejected': 'bg-red-500'
+      'OPEN': 'bg-green-500',
+      'IN_PROGRESS': 'bg-yellow-500',
+      'CLOSED': 'bg-red-500',
+      'RESOLVED': 'bg-blue-500'
     };
     return colorMap[status] || 'bg-gray-500';
   };
 
   const getStatusText = (status) => {
     const textMap = {
-      'published': 'Published',
-      'draft': 'Draft',
-      'pending': 'Pending',
-      'rejected': 'Rejected'
+      'OPEN': 'Open',
+      'IN_PROGRESS': 'In Progress',
+      'CLOSED': 'Closed',
+      'RESOLVED': 'Resolved'
     };
     return textMap[status] || status;
   };
@@ -273,8 +307,8 @@ const Posts = () => {
       </div>
 
       {/* Advanced Filters */}
-      <div className="card mb-6 sm:mb-8">
-        <div className="card-body p-4 sm:p-6">
+      <div className="card mb-6 sm:mb-8 relative overflow-visible">
+        <div className="card-body p-4 sm:p-6 overflow-visible">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6">
             <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-0">Advanced Filters</h3>
             <button
@@ -287,28 +321,28 @@ const Posts = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Category */}
-            <div>
+            <div className="relative overflow-visible">
               <label className="block text-sm font-medium text-text-secondary mb-2">
                 Category
               </label>
               <CustomSelect
                 value={filters.category}
                 onChange={(value) => handleFilterChange('category', value)}
-                options={categories.map(cat => ({ value: cat, label: cat }))}
+                options={categories}
                 placeholder="All Categories"
                 className="w-full"
               />
             </div>
 
             {/* Status */}
-            <div>
+            <div className="relative overflow-visible">
               <label className="block text-sm font-medium text-text-secondary mb-2">
                 Status
               </label>
               <CustomSelect
                 value={filters.status}
                 onChange={(value) => handleFilterChange('status', value)}
-                options={statuses.map(status => ({ value: status.value, label: status.label }))}
+                options={statuses}
                 placeholder="All Statuses"
                 className="w-full"
               />

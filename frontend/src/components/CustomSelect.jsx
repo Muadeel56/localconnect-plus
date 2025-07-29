@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 const CustomSelect = ({ 
   value, 
   onChange, 
-  options, 
+  options = [], 
   placeholder = "Select an option",
   className = "",
   size = "md"
@@ -18,11 +19,14 @@ const CustomSelect = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+    // Only add event listener if dropdown is open
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isOpen]);
 
   const selectedOption = options.find(option => option.value === value);
 
@@ -36,7 +40,7 @@ const CustomSelect = ({
   const sizeClass = sizeClasses[size] || sizeClasses.md;
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className={`relative ${className}`} ref={dropdownRef} style={{ zIndex: isOpen ? 9999 : 'auto' }} data-custom-select>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -55,9 +59,17 @@ const CustomSelect = ({
         </svg>
       </button>
 
-      {isOpen && (
-        <div className="absolute z-50 w-full mt-1 rounded-lg border border-border-primary bg-bg-card shadow-lg max-h-60 overflow-auto animate-fade-in">
-          {options.map((option) => (
+      {isOpen && createPortal(
+        <div 
+          className="fixed z-[9999] rounded-lg border-2 border-primary bg-bg-card shadow-2xl max-h-60 overflow-auto transform transition-all duration-200 ease-out opacity-100 scale-100"
+          style={{ 
+            top: dropdownRef.current ? dropdownRef.current.getBoundingClientRect().bottom + 8 : 0,
+            left: dropdownRef.current ? dropdownRef.current.getBoundingClientRect().left : 0,
+            width: dropdownRef.current ? dropdownRef.current.offsetWidth : 'auto',
+            minWidth: dropdownRef.current ? dropdownRef.current.offsetWidth : 'auto'
+          }}
+        >
+          {options && options.length > 0 ? options.map((option) => (
             <button
               key={option.value}
               type="button"
@@ -65,16 +77,19 @@ const CustomSelect = ({
                 onChange(option.value);
                 setIsOpen(false);
               }}
-              className={`w-full px-3 py-2 text-left transition-colors duration-150 ${
+              className={`w-full px-4 py-3 text-left transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg ${
                 option.value === value 
-                  ? 'bg-primary text-white' 
-                  : 'text-text-primary hover:bg-bg-secondary'
+                  ? 'bg-primary text-white font-medium' 
+                  : 'text-text-primary hover:bg-bg-secondary hover:text-text-primary'
               }`}
             >
               {option.label}
             </button>
-          ))}
-        </div>
+          )) : (
+            <div className="px-4 py-3 text-text-secondary text-sm">No options available</div>
+          )}
+        </div>,
+        document.body
       )}
     </div>
   );
