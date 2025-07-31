@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/accounts/', include('accounts.urls')),
     path('api/', include('posts.urls')),
     path('api/', include('notifications.urls')),
+    path('api/chat/', include('chat.urls')),  # Chat API endpoints
 ]
 
 # Serve media files during development

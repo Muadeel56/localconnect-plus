@@ -17,6 +17,13 @@ from .serializers import (
 )
 from .utils import generate_token, send_verification_email, send_password_reset_email
 from .permissions import IsAdminUser, CanManageUsers, CanManageRoles
+from rest_framework import serializers
+
+# Simple UserSerializer for user listing
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'role', 'is_active', 'created_at']
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UserRegistrationView(generics.CreateAPIView):
@@ -365,10 +372,10 @@ def change_user_role(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated, CanManageUsers])
+@permission_classes([permissions.IsAuthenticated])  # Changed from CanManageUsers to IsAuthenticated
 def get_users_list(request):
     """
-    Get list of users (Admin and Volunteers can view)
+    Get list of users (All authenticated users can search for basic user info)
     """
     try:
         # Get query parameters
@@ -377,18 +384,17 @@ def get_users_list(request):
         page = int(request.query_params.get('page', 1))
         page_size = int(request.query_params.get('page_size', 20))
         
-        # Start with all users
-        users = User.objects.all()
+        # Start with all active users
+        users = User.objects.filter(is_active=True)
         
-        # Apply role filter
-        if role_filter:
+        # Apply role filter (only for admins)
+        if role_filter and request.user.is_admin:
             users = users.filter(role=role_filter)
         
         # Apply search filter
         if search_query:
             users = users.filter(
                 models.Q(username__icontains=search_query) |
-                models.Q(email__icontains=search_query) |
                 models.Q(first_name__icontains=search_query) |
                 models.Q(last_name__icontains=search_query)
             )
@@ -401,30 +407,29 @@ def get_users_list(request):
         # Get paginated results
         users_page = users[start_index:end_index]
         
-        # Serialize users (exclude sensitive info for non-admins)
+        # Serialize users with appropriate level of detail
         if request.user.is_admin:
+            # Admins get full details
             user_data = UserSerializer(users_page, many=True).data
         else:
-            # For volunteers, show limited info
+            # Regular users get limited info for chat purposes
             user_data = []
             for user in users_page:
                 user_data.append({
                     'id': user.id,
                     'username': user.username,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
                     'role': user.role,
-                    'email_verified': user.email_verified,
-                    'created_at': user.created_at,
                     'is_active': user.is_active
                 })
         
         return Response({
-            'users': user_data,
-            'pagination': {
-                'page': page,
-                'page_size': page_size,
-                'total_count': total_count,
-                'total_pages': (total_count + page_size - 1) // page_size
-            }
+            'results': user_data,
+            'count': total_count,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': (total_count + page_size - 1) // page_size
         })
         
     except Exception as e:

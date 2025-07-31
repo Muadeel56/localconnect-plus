@@ -22,6 +22,7 @@ const Comments = React.lazy(() => import('./pages/Comments'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Admin = React.lazy(() => import('./pages/Admin'));
 const Notifications = React.lazy(() => import('./pages/Notifications'));
+const Chat = React.lazy(() => import('./pages/Chat'));
 const RoleManagement = React.lazy(() => import('./pages/RoleManagement'));
 const Moderation = React.lazy(() => import('./pages/Moderation'));
 
@@ -50,6 +51,7 @@ const App = () => {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/chat" element={<Chat />} />
                   <Route path="/role-management" element={<RoleManagement />} />
                   <Route path="/moderation" element={<Moderation />} />
                   <Route path="*" element={<Navigate to="/" replace />} />

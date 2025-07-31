@@ -5,4 +5,13 @@ django-cors-headers>=4.7.0
 djangorestframework-simplejwt>=5.5.0
 python-dotenv>=1.1.1
 django-filter>=23.5
-Pillow>=10.0.0 
+Pillow>=10.0.0
+
+# Milestone 3: Advanced Features
+channels>=4.0.0
+channels-redis>=4.1.0
+redis>=5.0.1
+celery>=5.3.4
+django-celery-beat>=2.5.0
+django-storages>=1.14.2
+daphne>=4.0.0  # ASGI server for WebSocket support 

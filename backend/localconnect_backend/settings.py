@@ -47,11 +47,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
+    'channels',  # WebSocket support
     
     # Local apps
     'accounts',
     'posts',
     'notifications',
+    'chat',  # Chat system
 ]
 
 MIDDLEWARE = [
@@ -94,6 +96,21 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'localconnect_backend.wsgi.application'
+
+# WebSocket Configuration
+ASGI_APPLICATION = 'localconnect_backend.asgi.application'
+
+# Channel Layers for WebSocket
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        # For production, use Redis:
+        # 'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        # 'CONFIG': {
+        #     "hosts": [('127.0.0.1', 6379)],
+        # },
+    },
+}
 
 
 # Database
