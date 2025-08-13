@@ -81,7 +81,10 @@ const NotificationBell = () => {
       {/* Notification Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-text-secondary hover:text-text-primary transition-colors"
+        className="relative p-2 transition-colors"
+        style={{ color: 'var(--text-secondary)' }}
+        onMouseEnter={(e) => e.target.style.color = 'var(--text-primary)'}
+        onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}
         aria-label="Notifications"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,7 +93,11 @@ const NotificationBell = () => {
         
         {/* Unread Badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-[var(--color-error-500)] text-[var(--color-dark-text)] text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 text-xs rounded-full h-5 w-5 flex items-center justify-center" 
+            style={{ 
+              backgroundColor: 'var(--color-error)', 
+              color: 'var(--text-inverse)' 
+            }}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -98,22 +105,34 @@ const NotificationBell = () => {
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-bg-card border border-border-primary rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-80 rounded-lg shadow-lg z-50" 
+          style={{ 
+            backgroundColor: 'var(--bg-card)', 
+            borderColor: 'var(--border-primary)',
+            border: '1px solid var(--border-primary)',
+            boxShadow: 'var(--shadow-lg)'
+          }}>
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border-primary">
-            <h3 className="text-lg font-semibold text-text-primary">Notifications</h3>
+                      <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid var(--border-primary)' }}>
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Notifications</h3>
             <div className="flex items-center space-x-2">
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-xs text-[var(--color-primary)] hover:text-[var(--color-primary)] hover:opacity-80 transition-colors"
+                  className="text-xs transition-colors"
+                  style={{ color: 'var(--color-primary)' }}
+                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                  onMouseLeave={(e) => e.target.style.opacity = '1'}
                 >
                   Mark all read
                 </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-text-tertiary hover:text-text-primary transition-colors"
+                className="transition-colors"
+                style={{ color: 'var(--text-tertiary)' }}
+                onMouseEnter={(e) => e.target.style.color = 'var(--text-primary)'}
+                onMouseLeave={(e) => e.target.style.color = 'var(--text-tertiary)'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -125,8 +144,8 @@ const NotificationBell = () => {
           {/* Notification List */}
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-4 text-center text-text-secondary">
-                <svg className="w-12 h-12 mx-auto mb-2 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-4 text-center" style={{ color: 'var(--text-secondary)' }}>
+                <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--text-tertiary)' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V5H4v6zM10 5h6V5h-6v6zM10 19h6v-6h-6v6z" />
                 </svg>
                 <p>No notifications</p>
@@ -135,15 +154,29 @@ const NotificationBell = () => {
               notifications.slice(0, 10).map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b border-border-primary last:border-b-0 hover:bg-bg-secondary transition-colors ${
-                    !notification.is_read ? 'bg-[var(--color-primary)] bg-opacity-10' : ''
-                  }`}
+                  className="p-4 last:border-b-0 transition-colors"
+                  style={{
+                    borderBottom: '1px solid var(--border-primary)',
+                    backgroundColor: !notification.is_read ? 'rgba(var(--color-primary-rgb), 0.1)' : 'transparent'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = !notification.is_read 
+                      ? 'rgba(var(--color-primary-rgb), 0.15)' 
+                      : 'var(--bg-secondary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = !notification.is_read 
+                      ? 'rgba(var(--color-primary-rgb), 0.1)' 
+                      : 'transparent';
+                  }}
                 >
                   <div className="flex items-start space-x-3">
                     {/* Notification Icon */}
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                      !notification.is_read ? 'bg-[var(--color-primary)] text-[var(--color-dark-text)]' : 'bg-[var(--color-surface)] text-[var(--color-text-muted)]'
-                    }`}>
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{
+                        backgroundColor: !notification.is_read ? 'var(--color-primary)' : 'var(--color-surface)',
+                        color: !notification.is_read ? 'var(--text-inverse)' : 'var(--color-text-muted)'
+                      }}>
                       {getNotificationIcon(notification.notification_type)}
                     </div>
 
@@ -154,15 +187,16 @@ const NotificationBell = () => {
                         onClick={() => handleNotificationClick(notification)}
                         className="block"
                       >
-                        <p className={`text-sm font-medium ${
-                          !notification.is_read ? 'text-text-primary' : 'text-text-secondary'
-                        }`}>
+                        <p className="text-sm font-medium" 
+                          style={{ 
+                            color: !notification.is_read ? 'var(--text-primary)' : 'var(--text-secondary)' 
+                          }}>
                           {notification.title}
                         </p>
-                        <p className="text-xs text-text-tertiary mt-1 line-clamp-2">
+                        <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-tertiary)' }}>
                           {notification.message}
                         </p>
-                        <p className="text-xs text-text-tertiary mt-2">
+                        <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
                           {notification.time_ago}
                         </p>
                       </Link>
@@ -172,7 +206,10 @@ const NotificationBell = () => {
                     <div className="flex-shrink-0">
                       <button
                         onClick={() => deleteNotification(notification.id)}
-                        className="text-text-tertiary hover:text-[var(--color-error-500)] transition-colors"
+                        className="transition-colors"
+                        style={{ color: 'var(--text-tertiary)' }}
+                        onMouseEnter={(e) => e.target.style.color = 'var(--color-error)'}
+                        onMouseLeave={(e) => e.target.style.color = 'var(--text-tertiary)'}
                         aria-label="Delete notification"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,10 +225,13 @@ const NotificationBell = () => {
 
           {/* Footer */}
           {notifications.length > 10 && (
-            <div className="p-4 border-t border-border-primary text-center">
+            <div className="p-4 text-center" style={{ borderTop: '1px solid var(--border-primary)' }}>
               <Link
                 to="/notifications"
-                                        className="text-sm text-[var(--color-primary)] hover:text-[var(--color-primary)] hover:opacity-80 transition-colors"
+                className="text-sm transition-colors"
+                style={{ color: 'var(--color-primary)' }}
+                onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                onMouseLeave={(e) => e.target.style.opacity = '1'}
                 onClick={() => setIsOpen(false)}
               >
                 View all notifications
