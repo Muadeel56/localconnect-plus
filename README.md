@@ -24,7 +24,10 @@ A modern, full-stack web application for building and managing local communities
 ### **Backend**
 - **Django 5.2.4** - Web framework
 - **Django REST Framework** - API development
+- **Django Channels** - WebSocket and async support
+- **Daphne** - ASGI server for WebSocket connections
 - **PostgreSQL** - Database
+- **Redis** - Channel layer backend (for production)
 - **JWT Authentication** - Security
 - **djangorestframework-simplejwt** - Token management
 
@@ -63,8 +66,19 @@ A modern, full-stack web application for building and managing local communities
   - Real-time updates through API
   - Comment filtering and search
 
+- **Real-time Chat System** ✨ **NEW**
+  - WebSocket-powered real-time messaging
+  - Multiple chat room support
+  - Community, private, and direct chat types
+  - Typing indicators and read receipts
+  - Message threading and replies
+  - File sharing capabilities
+  - Participant management
+  - Online status indicators
+
 - **Notification System**
   - Real-time notifications for user interactions
+  - Chat message notifications
   - Notification preferences and management
   - Mark as read/unread functionality
   - Notification history and filtering
@@ -77,6 +91,7 @@ A modern, full-stack web application for building and managing local communities
 
 - **Security & Performance**
   - JWT token authentication with security features
+  - WebSocket authentication with JWT tokens
   - Email verification with secure tokens
   - Password reset with secure tokens
   - CORS configuration for frontend integration
@@ -112,7 +127,11 @@ python manage.py migrate
 python manage.py createsuperuser
 
 # Run development server
+# For HTTP-only features (basic API testing):
 python manage.py runserver
+
+# For full functionality including WebSocket/Chat features:
+python run_asgi.py
 ```
 
 ### **Frontend Setup**
@@ -134,7 +153,11 @@ npm run dev
 ### **Backend Development**
 ```bash
 cd backend
+# For HTTP-only development (API testing):
 python manage.py runserver
+
+# For full development with WebSocket/Chat features:
+python run_asgi.py
 ```
 
 ### **Frontend Development**
@@ -166,6 +189,19 @@ python manage.py migrate
 - `PUT /api/accounts/profile/update/` - Update user profile
 - `GET /api/accounts/current-user/` - Get current user
 
+### **Chat System Endpoints** ✨ **NEW**
+- `GET /api/chat/rooms/` - List user's chat rooms
+- `POST /api/chat/rooms/` - Create new chat room
+- `GET /api/chat/rooms/{id}/` - Get chat room details
+- `PUT /api/chat/rooms/{id}/` - Update chat room
+- `DELETE /api/chat/rooms/{id}/` - Delete chat room
+- `POST /api/chat/rooms/{id}/join/` - Join chat room
+- `POST /api/chat/rooms/{id}/leave/` - Leave chat room
+- `GET /api/chat/messages/by_room/?room_id={id}` - Get room messages
+- `POST /api/chat/messages/` - Send message (HTTP fallback)
+- `WebSocket /ws/chat/{room_id}/?token={jwt}` - Real-time chat connection
+- `WebSocket /ws/notifications/?token={jwt}` - Real-time notifications
+
 ## 🧪 **Testing**
 
 ### **Backend Testing**
@@ -188,15 +224,21 @@ localconnect-plus/
 │   ├── accounts/           # User authentication
 │   ├── posts/              # Posts and comments
 │   ├── notifications/      # Notification system
+│   ├── chat/               # Real-time chat system
+│   ├── tests/              # Backend tests
 │   └── localconnect_backend/  # Django settings
 ├── frontend/               # React frontend
 │   ├── src/
 │   │   ├── components/     # React components
+│   │   │   └── chat/       # Chat-specific components
 │   │   ├── pages/          # Page components
 │   │   ├── services/       # API services
 │   │   └── utils/          # Utility functions
 │   └── public/             # Static files
-├── docs/                   # Documentation
+├── docs/                   # Documentation and milestone reports
+├── tools/                  # Development tools and scripts
+│   └── scripts/            # Automation scripts
+├── LICENSE                 # Project license
 └── README.md              # This file
 ```
 
@@ -232,8 +274,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [x] Admin dashboard with user management
 - [x] Content moderation tools
 
-### **Phase 3: Advanced Features** 📋 **PLANNED**
-- [ ] Real-time chat between users
+### **Phase 3: Advanced Features** 🚧 **IN PROGRESS**
+- [x] Real-time chat between users ✅ **COMPLETED**
+  - [x] WebSocket infrastructure with daphne/channels
+  - [x] Chat room management (community, private, direct)
+  - [x] Real-time messaging with typing indicators
+  - [x] Message threading and replies
+  - [x] Participant management and roles
+  - [x] File sharing in chat
+  - [x] WebSocket authentication with JWT
 - [ ] Event management system
 - [ ] File upload and media management
 - [ ] Advanced analytics and reporting
@@ -261,15 +310,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🏆 **Project Highlights**
 
 ### **📊 Technical Achievements**
-- **6,300+ lines of code** across backend and frontend
-- **30+ API endpoints** with comprehensive functionality
-- **40+ features** implemented and tested
+- **8,500+ lines of code** across backend and frontend
+- **40+ API endpoints** with comprehensive functionality
+- **50+ features** implemented and tested
 - **Production-ready architecture** with security best practices
+- **Real-time WebSocket infrastructure** with channels and daphne
 
 ### **🎯 Key Features Delivered**
 - ✅ **Complete authentication system** with email verification and password reset
 - ✅ **Full-featured posts and comments system** with advanced search and filtering
 - ✅ **Real-time notification system** for user interactions
+- ✅ **Real-time chat system** with WebSocket support and multiple room types ✨ **NEW**
 - ✅ **Admin dashboard** with user management and moderation tools
 - ✅ **Role-based access control** with Admin, Volunteer, and User roles
 - ✅ **Modern, responsive UI/UX** with dark/light theme support
@@ -277,6 +328,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### **🚀 Ready for Production**
 - **Scalable database design** with PostgreSQL
 - **Security best practices** with JWT authentication
+- **Real-time communication** with WebSocket infrastructure
 - **Performance optimizations** with caching and lazy loading
 - **Comprehensive error handling** and user feedback
 - **Mobile-responsive design** for all devices

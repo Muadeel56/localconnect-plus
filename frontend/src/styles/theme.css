@@ -4,6 +4,7 @@
 :root {
   /* Primary Colors */
   --color-primary: #F96167;
+  --color-primary-rgb: 249, 97, 103;
   --color-secondary: #A29BFE;
   --color-accent: #FFB400;
   
@@ -26,7 +27,13 @@
   /* Status Colors */
   --color-success: #22c55e;
   --color-error: #ef4444;
+  --color-error-500: #ef4444;
   --color-warning: #f59e0b;
+  
+  /* Additional Colors */
+  --color-surface: #f8f9fa;
+  --color-text-muted: #6b7280;
+  --color-dark-text: #ffffff;
   
   /* Shadows */
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
@@ -58,6 +65,11 @@
   /* Border Colors */
   --border-primary: #404040;
   --border-secondary: #555555;
+  
+  /* Additional Colors */
+  --color-surface: #404040;
+  --color-text-muted: #9ca3af;
+  --color-dark-text: #ffffff;
   
   /* Shadows */
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);

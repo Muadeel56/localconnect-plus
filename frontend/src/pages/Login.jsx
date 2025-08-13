@@ -106,7 +106,7 @@ const Login = () => {
           <div className="p-6 sm:p-8 lg:p-10">
             {/* Header with improved styling */}
             <div className="text-center mb-8">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg transition-all duration-300 hover:shadow-xl">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:shadow-xl" style={{ background: 'var(--gradient-primary)' }}>
                 <svg className="w-10 h-10 sm:w-12 sm:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -133,21 +133,37 @@ const Login = () => {
                     name="username"
                     value={formData.username}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 pl-12 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    className={`w-full px-4 py-3 pl-12 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent ${
                       errors.username 
                         ? 'border-red-500' 
-                        : 'border-border-primary bg-bg-secondary hover:bg-bg-tertiary focus:bg-bg-card'
-                    } text-text-primary placeholder-text-tertiary`}
+                        : ''
+                    }`}
                     style={{
-                      backgroundColor: errors.username ? 'var(--error-bg-light)' : undefined,
-                      borderColor: errors.username ? 'var(--error-border)' : undefined
+                      borderColor: errors.username ? '#ef4444' : 'var(--border-primary)',
+                      backgroundColor: errors.username ? '#fef2f2' : 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      '::placeholder': { color: 'var(--text-tertiary)' }
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.backgroundColor = 'var(--bg-card)';
+                      e.target.style.boxShadow = '0 0 0 2px var(--color-primary)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.backgroundColor = errors.username ? '#fef2f2' : 'var(--bg-secondary)';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!errors.username) e.target.style.backgroundColor = 'var(--bg-tertiary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!errors.username) e.target.style.backgroundColor = 'var(--bg-secondary)';
                     }}
                     placeholder="Enter your username"
                     required
                     disabled={isLoading}
                   />
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--text-tertiary)' }}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
@@ -174,28 +190,46 @@ const Login = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 pl-12 pr-12 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    className={`w-full px-4 py-3 pl-12 pr-12 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent ${
                       errors.password 
                         ? 'border-red-500' 
-                        : 'border-border-primary bg-bg-secondary hover:bg-bg-tertiary focus:bg-bg-card'
-                    } text-text-primary placeholder-text-tertiary`}
+                        : ''
+                    }`}
                     style={{
-                      backgroundColor: errors.password ? 'var(--error-bg-light)' : undefined,
-                      borderColor: errors.password ? 'var(--error-border)' : undefined
+                      borderColor: errors.password ? '#ef4444' : 'var(--border-primary)',
+                      backgroundColor: errors.password ? '#fef2f2' : 'var(--bg-secondary)',
+                      color: 'var(--text-primary)'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.backgroundColor = 'var(--bg-card)';
+                      e.target.style.boxShadow = '0 0 0 2px var(--color-primary)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.backgroundColor = errors.password ? '#fef2f2' : 'var(--bg-secondary)';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!errors.password) e.target.style.backgroundColor = 'var(--bg-tertiary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!errors.password) e.target.style.backgroundColor = 'var(--bg-secondary)';
                     }}
                     placeholder="Enter your password"
                     required
                     disabled={isLoading}
                   />
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--text-tertiary)' }}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-tertiary hover:text-text-primary transition-colors duration-200"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center transition-colors duration-200"
+                    style={{ color: 'var(--text-tertiary)' }}
+                    onMouseEnter={(e) => e.target.style.color = 'var(--text-primary)'}
+                    onMouseLeave={(e) => e.target.style.color = 'var(--text-tertiary)'}
                     disabled={isLoading}
                   >
                     {showPassword ? (
@@ -228,16 +262,26 @@ const Login = () => {
                     name="remember"
                     checked={formData.remember}
                     onChange={handleChange}
-                    className="w-4 h-4 rounded border-border-primary text-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 bg-bg-secondary transition-all duration-200"
+                    className="w-4 h-4 rounded transition-all duration-200"
+                    style={{
+                      borderColor: 'var(--border-primary)',
+                      backgroundColor: 'var(--bg-secondary)',
+                      color: 'var(--color-primary)'
+                    }}
                     disabled={isLoading}
                   />
-                  <span className="text-sm text-text-secondary group-hover:text-text-primary transition-colors duration-200">
+                  <span className="text-sm transition-colors duration-200" style={{ color: 'var(--text-secondary)' }}
+                    onMouseEnter={(e) => e.target.style.color = 'var(--text-primary)'}
+                    onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}>
                     Remember me
                   </span>
                 </label>
                 <Link
                   to="/request-password-reset"
-                  className="text-sm text-primary-500 hover:text-primary-600 transition-colors duration-200 font-medium hover:underline"
+                  className="text-sm transition-colors duration-200 font-medium hover:underline"
+                  style={{ color: 'var(--color-primary)' }}
+                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                  onMouseLeave={(e) => e.target.style.opacity = '1'}
                 >
                   Forgot password?
                 </Link>
@@ -247,7 +291,27 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg hover:shadow-xl disabled:shadow-lg"
+                className="w-full text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg hover:shadow-xl disabled:shadow-lg"
+                style={{
+                  background: 'var(--gradient-primary)',
+                  boxShadow: 'var(--shadow-lg)'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLoading) {
+                    e.target.style.opacity = '0.9';
+                    e.target.style.boxShadow = 'var(--shadow-xl)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.opacity = '1';
+                  e.target.style.boxShadow = 'var(--shadow-lg)';
+                }}
+                onFocus={(e) => {
+                  e.target.style.boxShadow = '0 0 0 2px var(--color-primary)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.boxShadow = 'var(--shadow-lg)';
+                }}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
@@ -266,7 +330,10 @@ const Login = () => {
                 Don't have an account?{' '}
                 <Link
                   to="/register"
-                  className="text-primary-500 hover:text-primary-600 font-semibold transition-colors duration-200 hover:underline"
+                  className="font-semibold transition-colors duration-200 hover:underline"
+                  style={{ color: 'var(--color-primary)' }}
+                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                  onMouseLeave={(e) => e.target.style.opacity = '1'}
                 >
                   Sign up here
                 </Link>
