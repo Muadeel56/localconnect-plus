@@ -100,10 +100,29 @@ A modern, full-stack web application for building and managing local communities
 
 ## 📦 **Installation**
 
+### **🐳 Docker Setup (Recommended)**
+
+**Quick Start:**
+```bash
+git clone https://github.com/Muadeel56/localconnect-plus.git
+cd localconnect-plus
+./tools/scripts/setup-docker.sh
+```
+
+**Access the application:**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- Admin Panel: http://localhost:8000/admin
+
+For detailed Docker setup instructions, see [Docker Setup Guide](./docs/DOCKER_SETUP.md).
+
+### **Manual Setup**
+
 ### **Prerequisites**
 - Python 3.11+
 - Node.js 18+
 - PostgreSQL
+- Redis (for WebSocket support)
 - Git
 
 ### **Backend Setup**
@@ -119,7 +138,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Environment variables
-cp .env.example .env
+cp ../env.example .env
 # Edit .env with your database credentials
 
 # Database setup
@@ -140,8 +159,8 @@ python run_asgi.py
 cd frontend
 npm install
 
-# Environment variables
-cp .env.example .env
+# Environment variables (if not using Docker)
+cp ../env.example .env
 # Edit .env with your API endpoint
 
 # Run development server
